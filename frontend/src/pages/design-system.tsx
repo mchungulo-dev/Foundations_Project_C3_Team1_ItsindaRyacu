@@ -160,6 +160,12 @@ const variants = [
 ] as const
 const buttonSizes = ["xs", "sm", "default", "lg"] as const
 const iconSizes = ["icon-xs", "icon-sm", "icon", "icon-lg"] as const
+const sizeGuidance = [
+  { size: "xs", height: "32 px", usage: "Compact table actions" },
+  { size: "sm", height: "36 px", usage: "Secondary toolbar actions" },
+  { size: "default", height: "40 px", usage: "Filters and everyday actions" },
+  { size: "lg", height: "48 px", usage: "Sign in and primary form actions" },
+] as const
 const sections = [
   ["foundations", "Foundations"],
   ["buttons", "Buttons"],
@@ -231,6 +237,7 @@ function ButtonPlayground() {
   const [size, setSize] = useState<(typeof buttonSizes)[number]>("default")
   const [label, setLabel] = useState("Create project")
   const [disabled, setDisabled] = useState(false)
+  const [fullWidth, setFullWidth] = useState(false)
 
   return (
     <Preview title="Button playground">
@@ -294,15 +301,28 @@ function ButtonPlayground() {
             />
             <FieldLabel htmlFor="button-disabled">Disabled</FieldLabel>
           </Field>
+          <Field orientation="horizontal">
+            <Checkbox
+              id="button-full-width"
+              checked={fullWidth}
+              onCheckedChange={setFullWidth}
+            />
+            <FieldLabel htmlFor="button-full-width">Full width</FieldLabel>
+          </Field>
         </FieldGroup>
         <div className="flex min-w-0 flex-col gap-4">
           <div className="flex min-h-40 items-center justify-center overflow-x-auto rounded-lg border border-dashed bg-muted/30 p-6">
-            <Button variant={variant} size={size} disabled={disabled}>
+            <Button
+              variant={variant}
+              size={size}
+              disabled={disabled}
+              className={fullWidth ? "w-full" : undefined}
+            >
               {label || "Button"}
             </Button>
           </div>
           <pre className="overflow-x-auto rounded-lg bg-muted p-3 text-xs">
-            <code>{`<Button variant="${variant}" size="${size}"${disabled ? " disabled" : ""}>\n  {${JSON.stringify(label || "Button")}}\n</Button>`}</code>
+            <code>{`<Button variant="${variant}" size="${size}"${fullWidth ? ' className="w-full"' : ""}${disabled ? " disabled" : ""}>\n  {${JSON.stringify(label || "Button")}}\n</Button>`}</code>
           </pre>
         </div>
       </div>
@@ -633,7 +653,7 @@ export function DesignSystemPage() {
                 if (value) setTheme(value)
               }}
             >
-              <SelectTrigger id="theme">
+              <SelectTrigger id="theme" size="sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -730,6 +750,19 @@ export function DesignSystemPage() {
               </div>
             </Preview>
           </div>
+          <Preview title="Control size guide">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {sizeGuidance.map(({ size, height, usage }) => (
+                <div key={size} className="space-y-2">
+                  <p className="font-mono text-xs text-muted-foreground">
+                    {size} · {height}
+                  </p>
+                  <p className="text-sm">{usage}</p>
+                  <Button size={size}>Continue</Button>
+                </div>
+              ))}
+            </div>
+          </Preview>
         </Section>
 
         <Section
@@ -755,10 +788,10 @@ export function DesignSystemPage() {
           </Preview>
           <Preview title="Sizes & icons">
             <div className="flex flex-wrap items-end gap-6">
-              {buttonSizes.map((size) => (
+              {sizeGuidance.map(({ size, height }) => (
                 <div key={size} className="space-y-2">
                   <p className="font-mono text-xs text-muted-foreground">
-                    {size}
+                    {size} · {height}
                   </p>
                   <Button size={size}>Button</Button>
                 </div>
@@ -788,6 +821,95 @@ export function DesignSystemPage() {
             </div>
           </Preview>
           <ButtonPlayground />
+          <div className="grid gap-5 lg:grid-cols-2">
+            <Preview title="Member access / 48 px controls">
+              <div className="mx-auto max-w-md space-y-6">
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-brand">WELCOME BACK</p>
+                  <h3 className="text-3xl font-semibold tracking-tight">
+                    Welcome to your group.
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    See your savings, loans, and group activity in one clear
+                    place.
+                  </p>
+                </div>
+                <FieldGroup>
+                  <Field>
+                    <FieldLabel htmlFor="sample-phone">
+                      Mobile phone number
+                    </FieldLabel>
+                    <Input
+                      id="sample-phone"
+                      type="tel"
+                      placeholder="+250 788 123 456"
+                      autoComplete="off"
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="sample-pin">
+                      Your 4-digit PIN
+                    </FieldLabel>
+                    <Input
+                      id="sample-pin"
+                      type="password"
+                      inputMode="numeric"
+                      maxLength={4}
+                      placeholder="••••"
+                      autoComplete="off"
+                    />
+                  </Field>
+                </FieldGroup>
+                <Button size="lg" className="w-full">
+                  Sign in
+                  <RiArrowRightLine data-icon="inline-end" />
+                </Button>
+                <Button size="lg" variant="outline" className="w-full">
+                  Sign in with an SMS code
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Component preview with sample fields.
+                </p>
+              </div>
+            </Preview>
+            <Preview title="Dashboard / compact filter & prominent action">
+              <div className="space-y-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="font-medium">Your contributions</h3>
+                  <Button variant="outline">
+                    <RiCalendarLine />
+                    November 2026
+                  </Button>
+                </div>
+                <Card className="bg-secondary">
+                  <CardHeader>
+                    <CardDescription className="text-xs font-medium text-brand">
+                      DUE 5 NOVEMBER
+                    </CardDescription>
+                    <CardTitle className="mt-3 text-3xl font-semibold">
+                      RWF 5,000 to go
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Complete your November contribution and stay on track with
+                      your group.
+                    </p>
+                    <Button size="lg" className="w-full">
+                      Record contribution
+                      <RiArrowRightLine data-icon="inline-end" />
+                    </Button>
+                    <p className="text-xs text-muted-foreground">
+                      Recorded payments appear in your activity.
+                    </p>
+                  </CardContent>
+                </Card>
+                <Button variant="link" className="px-0">
+                  View all activity
+                </Button>
+              </div>
+            </Preview>
+          </div>
         </Section>
 
         <Section
@@ -1213,7 +1335,7 @@ export function DesignSystemPage() {
                           Sample panel opening from the {side}.
                         </SheetDescription>
                       </SheetHeader>
-                      <p className="px-4 text-sm">
+                      <p className="px-6 text-sm">
                         Twitezimbere · 24 members · Kigali
                       </p>
                       <SheetFooter>

@@ -6,6 +6,11 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+    /* Control heights: compact 32/36px, standard 40px, prominent 48px. */
+    --spacing-control-xs: 2rem;
+    --spacing-control-sm: 2.25rem;
+    --spacing-control: 2.5rem;
+    --spacing-control-lg: 3rem;
     --font-heading: var(--font-sans);
     --font-sans: 'DM Sans Variable', sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
