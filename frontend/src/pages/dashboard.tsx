@@ -25,7 +25,6 @@ import {
 } from "@/data/demo-data"
 import { formatDate, formatMoney } from "@/lib/format"
 
-// Accepting activity as a prop also makes the empty state easy to check.
 export function DashboardPage({
   activity = recentActivity,
 }: {
@@ -45,11 +44,9 @@ export function DashboardPage({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight">
-            Welcome back, {demoMember.firstName}.
-          </h1>
-        </div>
+        <h1 className="text-3xl font-semibold tracking-tight">
+          Welcome back, {demoMember.firstName}.
+        </h1>
         <p className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-3 text-sm">
           <RiCalendarLine
             className="size-5 text-muted-foreground"
