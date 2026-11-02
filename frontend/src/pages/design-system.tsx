@@ -1,5 +1,86 @@
-import { useState, type ReactNode } from "react"
-import { RiAddLine, RiArrowRightLine, RiInboxLine } from "@remixicon/react"
+import { useState, type CSSProperties, type ReactNode } from "react"
+import {
+  RiAddLine,
+  RiArrowRightLine,
+  RiInboxLine,
+  RiCalendarLine,
+  RiHomeLine,
+  RiGroupLine,
+} from "@remixicon/react"
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
+
+import {
+  Avatar,
+  AvatarBadge,
+  AvatarFallback,
+  AvatarGroup,
+  AvatarGroupCount,
+} from "@/components/ui/avatar"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import { Calendar } from "@/components/ui/calendar"
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import {
+  Progress,
+  ProgressLabel,
+  ProgressValue,
+} from "@/components/ui/progress"
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/ui/sidebar"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 import { useTheme } from "@/components/theme-provider"
 import { Badge } from "@/components/ui/badge"
@@ -87,6 +168,9 @@ const sections = [
   ["cards", "Cards & dialogs"],
   ["data", "Tables"],
   ["feedback", "Feedback & layout"],
+  ["navigation", "Navigation"],
+  ["overlays", "Sheets & popovers"],
+  ["visualization", "Avatars & charts"],
 ] as const
 const colors = [
   ["Background", "bg-background"],
@@ -268,6 +352,251 @@ function CheckboxExamples() {
   )
 }
 
+function PaginationExample() {
+  const [page, setPage] = useState(1)
+  const records = [
+    ["Aline Nyiraneza", "Eric Mugisha"],
+    ["Claudine Uwase", "Jean Habimana"],
+    ["Diane Mukamana", "Patrick Niyonzima"],
+  ]
+
+  return (
+    <div className="space-y-4">
+      <ul className="divide-y rounded-lg border">
+        {records[page - 1].map((name) => (
+          <li key={name} className="px-4 py-3 text-sm">
+            {name}
+          </li>
+        ))}
+      </ul>
+      <p aria-live="polite" className="text-sm text-muted-foreground">
+        Page {page} of 3 · Sample members
+      </p>
+      <Pagination aria-label="Sample member pages">
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious
+              href="#navigation"
+              aria-disabled={page === 1}
+              tabIndex={page === 1 ? -1 : undefined}
+              className={
+                page === 1 ? "pointer-events-none opacity-50" : undefined
+              }
+              onClick={(event) => {
+                event.preventDefault()
+                setPage((current) => Math.max(1, current - 1))
+              }}
+            />
+          </PaginationItem>
+          {[1, 2, 3].map((number) => (
+            <PaginationItem key={number}>
+              <PaginationLink
+                href="#navigation"
+                isActive={page === number}
+                aria-label={`Page ${number}`}
+                onClick={(event) => {
+                  event.preventDefault()
+                  setPage(number)
+                }}
+              >
+                {number}
+              </PaginationLink>
+            </PaginationItem>
+          ))}
+          <PaginationItem>
+            <PaginationNext
+              href="#navigation"
+              aria-disabled={page === 3}
+              tabIndex={page === 3 ? -1 : undefined}
+              className={
+                page === 3 ? "pointer-events-none opacity-50" : undefined
+              }
+              onClick={(event) => {
+                event.preventDefault()
+                setPage((current) => Math.min(3, current + 1))
+              }}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+    </div>
+  )
+}
+
+const sidebarItems = [
+  {
+    title: "Overview",
+    icon: RiHomeLine,
+    description: "See your group's savings and recent activity.",
+  },
+  {
+    title: "Members",
+    icon: RiGroupLine,
+    description: "Manage the people in your savings group.",
+  },
+  {
+    title: "Activity",
+    icon: RiInboxLine,
+    description: "Review contributions and group decisions.",
+  },
+] as const
+
+function SidebarExampleContent() {
+  const [active, setActive] = useState<(typeof sidebarItems)[number]>(
+    sidebarItems[0]
+  )
+  const { setOpenMobile } = useSidebar()
+
+  return (
+    <>
+      <Sidebar collapsible="icon">
+        <SidebarHeader>
+          <span className="truncate p-2 text-sm font-semibold group-data-[collapsible=icon]:sr-only">
+            Itsinda Ryacu
+          </span>
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Sample workspace</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {sidebarItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      isActive={active.title === item.title}
+                      tooltip={item.title}
+                      onClick={() => {
+                        setActive(item)
+                        setOpenMobile(false)
+                      }}
+                    >
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
+      <div className="min-w-0 flex-1 space-y-4 p-4">
+        <SidebarTrigger />
+        <div aria-live="polite" className="space-y-2">
+          <h3 className="font-semibold">{active.title}</h3>
+          <p className="text-sm text-muted-foreground">{active.description}</p>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Use the toggle to collapse the sidebar or open it on mobile.
+        </p>
+      </div>
+    </>
+  )
+}
+
+function DateExamples() {
+  const [date, setDate] = useState<Date | undefined>(new Date(2026, 10, 2))
+  const [open, setOpen] = useState(false)
+  const dateLabel = date?.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  })
+
+  return (
+    <div className="grid gap-5 md:grid-cols-2">
+      <Preview title="Calendar / single date">
+        <Calendar
+          mode="single"
+          selected={date}
+          onSelect={setDate}
+          defaultMonth={date}
+          className="mx-auto rounded-lg border"
+        />
+        <p aria-live="polite" className="mt-4 text-sm text-muted-foreground">
+          {dateLabel ? `Selected: ${dateLabel}` : "Select a meeting date."}
+        </p>
+      </Preview>
+      <Preview title="Popover / date picker">
+        <div className="space-y-3">
+          <Label>Meeting date</Label>
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger
+              render={<Button variant="outline" />}
+              aria-label={`Choose meeting date${dateLabel ? `, ${dateLabel}` : ""}`}
+            >
+              <RiCalendarLine />
+              {dateLabel ?? "Choose a date"}
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-auto">
+              <PopoverTitle>Meeting date</PopoverTitle>
+              <PopoverDescription>
+                Choose the next group meeting.
+              </PopoverDescription>
+              <Calendar
+                mode="single"
+                selected={date}
+                defaultMonth={date}
+                onSelect={(nextDate) => {
+                  setDate(nextDate)
+                  setOpen(false)
+                }}
+              />
+            </PopoverContent>
+          </Popover>
+          <p className="text-sm text-muted-foreground">
+            Both examples share the selected date.
+          </p>
+        </div>
+      </Preview>
+    </div>
+  )
+}
+
+function ProgressExample() {
+  const [value, setValue] = useState(60)
+  return (
+    <div className="space-y-4">
+      <Progress value={value}>
+        <ProgressLabel>Savings goal</ProgressLabel>
+        <ProgressValue />
+      </Progress>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant="outline"
+          onClick={() => setValue((current) => Math.max(0, current - 20))}
+          disabled={value === 0}
+        >
+          Decrease
+        </Button>
+        <Button
+          onClick={() => setValue((current) => Math.min(100, current + 20))}
+          disabled={value === 100}
+        >
+          Add contribution
+        </Button>
+      </div>
+      <Progress value={100}>
+        <ProgressLabel>Completed goal</ProgressLabel>
+        <ProgressValue />
+      </Progress>
+    </div>
+  )
+}
+
+const savingsData = [
+  { month: "Jun", savings: 160, loans: 80 },
+  { month: "Jul", savings: 210, loans: 120 },
+  { month: "Aug", savings: 240, loans: 100 },
+  { month: "Sep", savings: 300, loans: 160 },
+  { month: "Oct", savings: 340, loans: 180 },
+  { month: "Nov", savings: 400, loans: 200 },
+]
+const savingsConfig = {
+  savings: { label: "Savings", color: "var(--chart-1)" },
+  loans: { label: "Loans", color: "var(--chart-2)" },
+} satisfies ChartConfig
+
 export function DesignSystemPage() {
   const { theme, setTheme } = useTheme()
 
@@ -341,7 +670,7 @@ export function DesignSystemPage() {
         <div className="max-w-2xl space-y-3">
           <Badge variant="outline">Component library</Badge>
           <p className="text-xs leading-relaxed text-muted-foreground">
-            14 components · DM Sans · Light & dark themes
+            24 components · DM Sans · Light & dark themes
           </p>
         </div>
 
@@ -821,6 +1150,171 @@ export function DesignSystemPage() {
           </div>
         </Section>
 
+        <Section
+          id="navigation"
+          title="Navigation"
+          description="Breadcrumbs, interactive pagination, and a responsive sidebar with active and collapsed states."
+          source="src/components/ui/{breadcrumb,pagination,sidebar}.tsx"
+        >
+          <div className="grid gap-5 md:grid-cols-2">
+            <Preview title="Breadcrumb / current page">
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href="#main">Design system</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href="#navigation">
+                      Navigation
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>Breadcrumb</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </Preview>
+            <Preview title="Pagination / sample member list">
+              <PaginationExample />
+            </Preview>
+          </div>
+          <Preview title="Sidebar / desktop collapse & mobile sheet">
+            <TooltipProvider>
+              <SidebarProvider
+                className="relative isolate min-h-72 overflow-hidden rounded-lg border [&_[data-slot=sidebar-container]]:absolute [&_[data-slot=sidebar-container]]:h-full"
+                style={{ "--sidebar-width": "13rem" } as CSSProperties}
+              >
+                <SidebarExampleContent />
+              </SidebarProvider>
+            </TooltipProvider>
+          </Preview>
+        </Section>
+
+        <Section
+          id="overlays"
+          title="Sheets, popovers & tooltips"
+          description="Side panels from every edge, date selection, and contextual help. Open overlays and use Escape to dismiss them."
+          source="src/components/ui/{sheet,popover,calendar,tooltip}.tsx"
+        >
+          <div className="grid gap-5 md:grid-cols-2">
+            <Preview title="Sheet / all sides">
+              <div className="flex flex-wrap gap-3">
+                {(["left", "right", "top", "bottom"] as const).map((side) => (
+                  <Sheet key={side}>
+                    <SheetTrigger render={<Button variant="outline" />}>
+                      Open {side}
+                    </SheetTrigger>
+                    <SheetContent side={side}>
+                      <SheetHeader>
+                        <SheetTitle>Group details</SheetTitle>
+                        <SheetDescription>
+                          Sample panel opening from the {side}.
+                        </SheetDescription>
+                      </SheetHeader>
+                      <p className="px-4 text-sm">
+                        Twitezimbere · 24 members · Kigali
+                      </p>
+                      <SheetFooter>
+                        <SheetClose render={<Button />}>Done</SheetClose>
+                      </SheetFooter>
+                    </SheetContent>
+                  </Sheet>
+                ))}
+              </div>
+            </Preview>
+            <Preview title="Tooltip / hover or keyboard focus">
+              <TooltipProvider>
+                <div className="flex flex-wrap gap-3">
+                  {(["top", "right", "bottom", "left"] as const).map((side) => (
+                    <Tooltip key={side}>
+                      <TooltipTrigger render={<Button variant="outline" />}>
+                        Help {side}
+                      </TooltipTrigger>
+                      <TooltipContent side={side}>
+                        Your group records stay connected to your account.
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                </div>
+              </TooltipProvider>
+            </Preview>
+          </div>
+          <DateExamples />
+        </Section>
+
+        <Section
+          id="visualization"
+          title="Avatars, progress & charts"
+          description="Member identities, savings targets, and an interactive chart using the shared palette. All values are sample data."
+          source="src/components/ui/{avatar,progress,chart}.tsx"
+        >
+          <div className="grid gap-5 md:grid-cols-2">
+            <Preview title="Avatar / sizes, fallback & group">
+              <div className="space-y-5">
+                <div className="flex items-end gap-5">
+                  {(["sm", "default", "lg"] as const).map((size) => (
+                    <div key={size} className="space-y-2">
+                      <Avatar size={size} aria-label="Aline Nyiraneza">
+                        <AvatarFallback>AN</AvatarFallback>
+                        <AvatarBadge aria-label="Online" />
+                      </Avatar>
+                      <p className="font-mono text-xs text-muted-foreground">
+                        {size}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                <AvatarGroup aria-label="Sample group members">
+                  {["AN", "EM", "CU"].map((initials) => (
+                    <Avatar key={initials} aria-label={`Member ${initials}`}>
+                      <AvatarFallback>{initials}</AvatarFallback>
+                    </Avatar>
+                  ))}
+                  <AvatarGroupCount aria-label="21 more members">
+                    +21
+                  </AvatarGroupCount>
+                </AvatarGroup>
+              </div>
+            </Preview>
+            <Preview title="Progress / adjustable & complete">
+              <ProgressExample />
+            </Preview>
+          </div>
+          <Preview title="Chart / monthly savings & loans">
+            <p className="mb-4 text-sm text-muted-foreground">
+              Sample amounts in thousands of Rwandan francs. Hover or use the
+              arrow keys to inspect values.
+            </p>
+            <ChartContainer config={savingsConfig} className="h-64 w-full">
+              <BarChart accessibilityLayer data={savingsData}>
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="month"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="savings" fill="var(--color-savings)" radius={4} />
+                <Bar dataKey="loans" fill="var(--color-loans)" radius={4} />
+              </BarChart>
+            </ChartContainer>
+            <div className="mt-4 flex justify-center gap-5 text-sm">
+              {Object.entries(savingsConfig).map(([key, item]) => (
+                <span key={key} className="flex items-center gap-2">
+                  <span
+                    aria-hidden="true"
+                    className="size-3 rounded-sm"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  {item.label}
+                </span>
+              ))}
+            </div>
+          </Preview>
+        </Section>
       </main>
     </div>
   )
