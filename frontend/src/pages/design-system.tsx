@@ -91,6 +91,7 @@ const sections = [
 const colors = [
   ["Background", "bg-background"],
   ["Foreground", "bg-foreground"],
+  ["Brand", "bg-brand"],
   ["Primary", "bg-primary"],
   ["Secondary", "bg-secondary"],
   ["Muted", "bg-muted"],
@@ -351,7 +352,7 @@ export function DesignSystemPage() {
           source="src/index.css"
         >
           <Preview title="Color palette">
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-8">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-9">
               {colors.map(([name, className]) => (
                 <div key={name} className="space-y-2">
                   <div className={`h-16 rounded-lg border ${className}`} />
