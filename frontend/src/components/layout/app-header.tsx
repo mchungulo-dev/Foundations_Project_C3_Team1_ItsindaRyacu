@@ -27,14 +27,12 @@ export function AppHeader() {
           <span className="text-foreground">Overview</span>
         </p>
       </div>
-      <div className="flex shrink-0 items-center gap-3">
         <span
-          className="hidden size-9 items-center justify-center rounded-full bg-secondary text-xs font-medium sm:flex"
+          className="hidden size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-medium sm:flex"
           aria-label={demoMember.name}
         >
           {demoMember.initials}
         </span>
-      </div>
     </header>
   )
 }
