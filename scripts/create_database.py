@@ -190,7 +190,7 @@ def initialize_database():
         with sqlite3.connect(DB_PATH) as connection:
             cursor = connection.cursor()
             cursor.executescript(TABLES_SQL)
-            print("Database schema created successfully (12 tables).")
+            print("Database schema created successfully!")
     except sqlite3.Error as e:
         print(f"An error occurred while creating the database: {e}")
 
@@ -236,12 +236,41 @@ def insert_permissions():
                     permissions_data
                 )
                 connection.commit()
-                print("Role-specific permissions inserted successfully!")
+                print("Role-specific administaration and member permissions inserted successfully!")
                 print(f"Rows affected: {cursor.rowcount}")
         except sqlite3.Error as e:
             print(f"An error occurred inserting permissions: {e}")
 
+def test_permissions():
+    print("\n--- Testing Permissions ---")
+    if os.path.exists(DB_PATH):
+        try:
+            with sqlite3.connect(DB_PATH) as connection:
+                cursor = connection.cursor()
+                
+                # Helper function to check permission
+                def check(role, resource, action):
+                    cursor.execute(
+                        "SELECT is_allowed FROM permissions WHERE role=? AND resource=? AND action=?", 
+                        (role, resource, action)
+                    )
+                    result = cursor.fetchone()
+                    return bool(result[0]) if result else False
+
+                # 1. Member tests
+                print(f"Member can delete members? {check('member', 'members', 'delete')}")
+                print(f"Member can read savings? {check('member', 'savings', 'read')}")
+                
+                # 2. Chairperson tests
+                print(f"Chairperson can create loans? {check('chairperson', 'loans', 'create')}")
+                
+                # 3. Admin tests
+                print(f"Admin can update group account? {check('admin', 'group_account', 'update')}")
+
+        except sqlite3.Error as e:
+            print(f"An error occurred testing permissions: {e}")
+
 if __name__=="__main__":
     initialize_database()
     insert_permissions()
-    
+    test_permissions()
