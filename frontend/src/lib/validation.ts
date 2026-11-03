@@ -4,3 +4,7 @@ export function isValidRwandaPhone(phone: string) {
   const digits = phone.replace(/[\s-]/g, "")
   return /^(?:\+?250|0)?7[2389]\d{7}$/.test(digits)
 }
+
+export function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+}
