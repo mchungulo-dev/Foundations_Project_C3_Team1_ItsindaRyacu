@@ -45,17 +45,13 @@ router.route('/register').post(async(req, res) => {
             start_date
         } = value;
 
-        if(!group_name || !admin_email || !password || !member_name || !phone || !national_id_number) {
-            return res.status(400).json({message: "Please fill all required fields!"})
-        }
-
         // Check whether admin email already exists
         const existingGroup = db.prepare(`SELECT account_id FROM group_account WHERE admin_email=?`).get(admin_email)
 
         const existingMember = db.prepare(`SELECT member_id FROM members WHERE email = ?`).get(admin_email);
 
         if (existingGroup || existingMember) {
-            return res.status(400).json({message: "A group with this admin email already exists!"})
+            return res.status(409).json({message: "A group with this admin email already exists!"})
         }
 
         // Hash the password
@@ -93,8 +89,22 @@ router.route('/register').post(async(req, res) => {
             );
 
             const accountId = groupResult.lastInsertRowid;
-            db.prepare(`INSERT INTO members (account_id, member_name, email, phone, national_id_number, role, is_active)
-                VALUES (?, ?, ?, ?, ?, ?, ?)`).run(accountId, member_name, admin_email, phone, national_id_number, 'admin', 1);
+            db.prepare(`
+                INSERT INTO members (
+                    account_id, member_name, email, phone,
+                    national_id_number, password_hash, role, is_active
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `).run(
+                accountId,
+                member_name,
+                admin_email,
+                phone,
+                national_id_number,
+                hashedPassword,
+                'admin',
+                1
+            );
 
             return accountId;
 

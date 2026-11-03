@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express')
 const db = require('./config/database')
 const app = express()
@@ -7,14 +9,12 @@ app.use(express.json())
 
 // routes
 const adminRegistrationRouter = require('./routers/admin_registration_router')
+const loginRouter = require('./routers/login-router')
+
 app.use('/auth/admin', adminRegistrationRouter)
+app.use('/auth/', loginRouter)
 
-app.get('/', (req, res) => {
-    res.json({
-        message: 'Ibimina API is running!'
-    });
-});
-
+// Check whether the DB is running.
 app.get('/api/test-db', (req, res) => {
     const tables = db.prepare(`
         SELECT name
@@ -27,7 +27,7 @@ app.get('/api/test-db', (req, res) => {
         tables: tables
     });
 });
-
+console.log('JWT Secret loaded:', !!process.env.JWT_SECRET);
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
