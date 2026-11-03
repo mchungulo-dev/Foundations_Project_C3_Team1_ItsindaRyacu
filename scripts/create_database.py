@@ -19,6 +19,8 @@ TABLES_SQL = """
         meeting_day TEXT,
         meeting_time TIME,
         start_date DATE,
+        late_fine_amount NUMERIC,
+        absent_fine_amount NUMERIC,
         is_active BOOLEAN,
         created_at TIMESTAMP,
         updated_at TIMESTAMP
@@ -38,6 +40,49 @@ TABLES_SQL = """
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (account_id) REFERENCES group_account(account_id) ON DELETE CASCADE,
         FOREIGN KEY (invite_id) REFERENCES invitations(invitation_id) ON DELETE SET NULL
+    );
+    CREATE TABLE IF NOT EXISTS invitations(
+        invitation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        account_id INT NOT NULL,
+        invite_token TEXT UNIQUE NOT NULL,
+        member_id INT NOT NULL,
+        role_assigned TEXT NOT NULL CHECK (role IN('admin', 'chairperson', 'treasurer', 'secretary', 'member')) DEFAULT 'member',
+        status TEXT NOT NULL CHECK (status IN('pending', 'accepted', 'expired', 'revoked')) DEFAULT 'pending',
+        expires_at DATE NOT NULL,
+        accepted_at TIMESTAMP NOT NULL,
+        creatd_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        invited_by INT NOT NULL,
+        FOREIGN KEY (account_id) REFERENCES group_account(account_id),
+        FOREIGN KEY (member_id) REFERENCES members(member_id),
+        FOREIGN KEY (invited_by) REFERENCES members(member_id)
+    );
+
+
+    CREATE TABLE IF NOT EXISTS meetings(
+        meeting_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        account_id INTEGER NOT NULL,
+        meeting_date DATE NOT NULL,
+        meeting_time TIMESTAMP NOT NULL,
+        meeting_type TEXT NOT NULL CHECK (type IN ('regular', 'emmergency', 'special')) DEFAULT 'regular',
+        minutes TEXT,
+        created_by INT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (account_id) REFERENCES group_account(account_id) ON DELETE CASCADE,
+        FOREIGN KEY (created_by) REFERENCES members(member_id) ON DELETE CASCADE    
+    );
+
+    CREATE TABLE IF NOT EXISTS meeting_attendance(
+        attendance_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        meeting_id INT NOT NULL,
+        member_id INT NOT NULL,
+        status TEXT NOT NULL CHECK (status IN('present', 'late', 'absent', 'excused')),
+        fine_amount NUMERIC DEFAULT 0,
+        marked_by INT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (meeting_id) REFERENCES meeting(meeting_id),
+        FOREIGN KEY (member_id) REFERENCES members(member_id),
+        FOREIGN KEY (marked_by) REFERENCES members(member_id),
+        UNIQUE KEY unique_attendance (meeting_id, member_id)
     );
 """
 
