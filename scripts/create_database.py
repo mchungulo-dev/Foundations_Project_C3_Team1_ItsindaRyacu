@@ -39,7 +39,7 @@ TABLES_SQL = """
         member_id INTEGER PRIMARY KEY AUTOINCREMENT,
         account_id INTEGER NOT NULL,
         member_name TEXT NOT NULL,
-        email TEXT NOT NULL UNIQUE,
+        email TEXT,
         phone TEXT NOT NULL UNIQUE,
         national_id_number INTEGER NOT NULL UNIQUE,
         role TEXT NOT NULL CHECK(role IN('admin', 'chairperson', 'treasurer', 'member')) DEFAULT 'member',
