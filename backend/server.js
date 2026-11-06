@@ -1,10 +1,18 @@
 require('dotenv').config();
 
 const express = require('express')
+const cors = require('cors')
 const db = require('./config/database')
 const app = express()
 
 // Use express middleware
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN
+      ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
+      : true,
+  })
+)
 app.use(express.json())
 
 // routes

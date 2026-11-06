@@ -17,6 +17,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { AuthLayout } from "@/layouts/auth-layout"
+import {
+  adminRegisterRequest,
+  ApiError,
+  type AdminRegisterResponse,
+} from "@/lib/api"
 import { isRegisteredAccount } from "@/lib/register-account"
 import { isValidMeetingTime } from "@/lib/validation"
 
@@ -61,7 +66,9 @@ export function CreateGroupPage() {
   const [errors, setErrors] = useState<Partial<Record<keyof GroupFormData, string>>>(
     {}
   )
-  const [completed, setCompleted] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [apiError, setApiError] = useState("")
+  const [success, setSuccess] = useState<AdminRegisterResponse | null>(null)
 
   if (!account) {
     return <Navigate to="/register" replace />
@@ -73,6 +80,7 @@ export function CreateGroupPage() {
   ) {
     setForm((current) => ({ ...current, [key]: value }))
     setErrors((current) => ({ ...current, [key]: "" }))
+    setApiError("")
   }
 
   function validateStep(currentStep: number) {
@@ -110,7 +118,7 @@ export function CreateGroupPage() {
     return Object.keys(next).length === 0
   }
 
-  function handleNext(event: FormEvent) {
+  async function handleNext(event: FormEvent) {
     event.preventDefault()
     if (!validateStep(step)) {
       return
@@ -119,18 +127,40 @@ export function CreateGroupPage() {
       setStep(step + 1)
       return
     }
-    setCompleted(true)
+
+    setSubmitting(true)
+    setApiError("")
+    try {
+      const data = await adminRegisterRequest(account, {
+        groupName: form.groupName,
+        location: form.location,
+        savingsAmount: Number(form.savingsAmount),
+        meetingDay: form.meetingDay,
+        meetingTime: form.meetingTime,
+        startDate: form.startDate,
+      })
+      setSuccess(data)
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setApiError(error.message)
+        return
+      }
+      setApiError("Could not reach the server. Is it running?")
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   function handleBack() {
     setStep((current) => Math.max(0, current - 1))
   }
 
-  const progressValue = completed
-    ? 100
-    : Math.round(((step + 1) / STEPS.length) * 100)
+  const progressValue =
+    success !== null
+      ? 100
+      : Math.round(((step + 1) / STEPS.length) * 100)
 
-  if (completed) {
+  if (success) {
     return (
       <AuthLayout>
         <div
@@ -139,12 +169,10 @@ export function CreateGroupPage() {
         >
           <RiCheckLine className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
           <div className="space-y-1">
-            <p className="font-medium text-foreground">
-              {form.groupName.trim()} is ready to go.
-            </p>
+            <p className="font-medium text-foreground">{success.message}</p>
             <p>
-              You will sign in as group admin with{" "}
-              <span className="font-medium">{account.email}</span>.
+              <span className="font-medium">{success.group_name}</span> · sign
+              in as <span className="font-medium">{success.admin_email}</span>.
             </p>
           </div>
         </div>
@@ -168,9 +196,9 @@ export function CreateGroupPage() {
         Create your group
       </h1>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        Step {step + 1} of {STEPS.length} · {STEPS[step]}. Signed in as{" "}
-        <span className="font-medium text-foreground">{account.name}</span>, group
-        admin.
+        Step {step + 1} of {STEPS.length} · {STEPS[step]}.{" "}
+        <span className="font-medium text-foreground">{account.name}</span> will be
+        the group admin.
       </p>
 
       <Progress
@@ -179,6 +207,15 @@ export function CreateGroupPage() {
       />
 
       <form onSubmit={handleNext} noValidate className="mt-8 space-y-6">
+        {apiError ? (
+          <p
+            role="alert"
+            className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+          >
+            {apiError}
+          </p>
+        ) : null}
+
         {step === 0 ? (
           <>
             <div className="space-y-2.5">
@@ -195,6 +232,7 @@ export function CreateGroupPage() {
                 aria-describedby={
                   errors.groupName ? "group-name-error" : undefined
                 }
+                disabled={submitting}
                 required
               />
               {errors.groupName ? (
@@ -217,6 +255,7 @@ export function CreateGroupPage() {
                 onChange={(event) =>
                   updateField("location", event.target.value)
                 }
+                disabled={submitting}
               />
             </div>
             <div className="space-y-2.5">
@@ -235,6 +274,7 @@ export function CreateGroupPage() {
                 aria-describedby={
                   errors.savingsAmount ? "savings-amount-error" : undefined
                 }
+                disabled={submitting}
                 required
               />
               {errors.savingsAmount ? (
@@ -257,6 +297,7 @@ export function CreateGroupPage() {
               <Select
                 value={form.meetingDay || null}
                 onValueChange={(value) => updateField("meetingDay", value ?? "")}
+                disabled={submitting}
               >
                 <SelectTrigger
                   id="meeting-day"
@@ -299,6 +340,7 @@ export function CreateGroupPage() {
                 aria-describedby={
                   errors.meetingTime ? "meeting-time-error" : undefined
                 }
+                disabled={submitting}
                 required
               />
               {errors.meetingTime ? (
@@ -324,6 +366,7 @@ export function CreateGroupPage() {
                 aria-describedby={
                   errors.startDate ? "start-date-error" : undefined
                 }
+                disabled={submitting}
                 required
               />
               {errors.startDate ? (
@@ -346,6 +389,7 @@ export function CreateGroupPage() {
               variant="outline"
               size="lg"
               className="sm:flex-1"
+              disabled={submitting}
               onClick={handleBack}
             >
               <RiArrowLeftLine aria-hidden="true" />
@@ -356,8 +400,13 @@ export function CreateGroupPage() {
             type="submit"
             size="lg"
             className={step > 0 ? "sm:flex-1" : "w-full"}
+            disabled={submitting}
           >
-            {step === STEPS.length - 1 ? "Create group" : "Continue"}
+            {step === STEPS.length - 1
+              ? submitting
+                ? "Creating…"
+                : "Create group"
+              : "Continue"}
             <RiArrowRightLine aria-hidden="true" />
           </Button>
         </div>

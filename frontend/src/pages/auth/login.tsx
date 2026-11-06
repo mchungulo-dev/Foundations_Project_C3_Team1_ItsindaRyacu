@@ -5,7 +5,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AuthLayout } from "@/layouts/auth-layout"
+import { applyLoginSuccess, ApiError, loginRequest } from "@/lib/api"
 import { isValidEmail } from "@/lib/validation"
+
+function destinationFromLogin(redirectTo: string | undefined): string {
+  if (redirectTo === "/admin" || redirectTo === "/member") {
+    return "/dashboard"
+  }
+  return redirectTo ?? "/dashboard"
+}
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -13,16 +21,34 @@ export function LoginPage() {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState({ email: "", password: "" })
+  const [submitting, setSubmitting] = useState(false)
+  const [apiError, setApiError] = useState("")
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    setApiError("")
     const nextErrors = {
       email: isValidEmail(email) ? "" : "Enter a valid email address.",
       password: password ? "" : "Enter your password.",
     }
     setErrors(nextErrors)
-    if (!nextErrors.email && !nextErrors.password) {
-      navigate("/dashboard")
+    if (nextErrors.email || nextErrors.password) {
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      const data = await loginRequest(email, password)
+      applyLoginSuccess(data)
+      navigate(destinationFromLogin(data.redirect_to))
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setApiError(error.message)
+        return
+      }
+      setApiError("Could not reach the server. Is it running?")
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -32,6 +58,14 @@ export function LoginPage() {
         Sign in
       </h1>
       <form onSubmit={handleSubmit} noValidate className="mt-8 space-y-6">
+        {apiError ? (
+          <p
+            role="alert"
+            className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+          >
+            {apiError}
+          </p>
+        ) : null}
         <div className="space-y-2.5">
           <Label htmlFor="login-email">Email</Label>
           <Input
@@ -43,6 +77,7 @@ export function LoginPage() {
             onChange={(event) => setEmail(event.target.value)}
             aria-invalid={Boolean(errors.email)}
             aria-describedby={errors.email ? "login-email-error" : undefined}
+            disabled={submitting}
             required
           />
           {errors.email ? (
@@ -70,6 +105,7 @@ export function LoginPage() {
               aria-describedby={
                 errors.password ? "login-password-error" : undefined
               }
+              disabled={submitting}
               required
             />
             <Button
@@ -79,6 +115,7 @@ export function LoginPage() {
               className="absolute top-1.5 right-2"
               aria-label={showPassword ? "Hide password" : "Show password"}
               aria-pressed={showPassword}
+              disabled={submitting}
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? (
@@ -98,8 +135,8 @@ export function LoginPage() {
             </p>
           ) : null}
         </div>
-        <Button type="submit" size="lg" className="w-full">
-          Sign in
+        <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+          {submitting ? "Signing in…" : "Sign in"}
           <RiArrowRightLine aria-hidden="true" />
         </Button>
       </form>
