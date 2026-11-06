@@ -2,6 +2,7 @@ import { BrowserRouter, Link, Navigate, Route, Routes } from "react-router-dom"
 import { AppLayout } from "@/layouts/app-layout"
 import { LoginPage } from "@/pages/auth/login"
 import { RegisterPage } from "@/pages/auth/register"
+import { CreateGroupPage } from "@/pages/auth/create-group"
 import { DashboardPage } from "@/pages/dashboard"
 import { DesignSystemPage } from "@/pages/design-system"
 
@@ -18,6 +19,7 @@ export function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/register/create-group" element={<CreateGroupPage />} />
         <Route
           path="/dashboard"
           element={
