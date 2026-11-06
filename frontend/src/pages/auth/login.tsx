@@ -1,10 +1,11 @@
 import { useState, type FormEvent } from "react"
 import { RiArrowRightLine, RiEyeLine, RiEyeOffLine } from "@remixicon/react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AuthLayout } from "@/layouts/auth-layout"
+import { useSession } from "@/context/session-context"
 import { applyLoginSuccess, ApiError, loginRequest } from "@/lib/api"
 import { isValidEmail } from "@/lib/validation"
 
@@ -15,8 +16,19 @@ function destinationFromLogin(redirectTo: string | undefined): string {
   return redirectTo ?? "/dashboard"
 }
 
+function isSafeInternalPath(path: unknown): path is string {
+  return (
+    typeof path === "string" &&
+    path.startsWith("/") &&
+    !path.startsWith("//") &&
+    !path.includes("..")
+  )
+}
+
 export function LoginPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const { setLoginSession } = useSession()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -40,7 +52,12 @@ export function LoginPage() {
     try {
       const data = await loginRequest(email, password)
       applyLoginSuccess(data)
-      navigate(destinationFromLogin(data.redirect_to))
+      setLoginSession(data)
+      const state = location.state as { from?: unknown } | null
+      const afterLogin = isSafeInternalPath(state?.from)
+        ? state.from
+        : destinationFromLogin(data.redirect_to)
+      navigate(afterLogin, { replace: true })
     } catch (error) {
       if (error instanceof ApiError) {
         setApiError(error.message)

@@ -1,4 +1,5 @@
 import { BrowserRouter, Link, Navigate, Route, Routes } from "react-router-dom"
+import { ProtectedRoute } from "@/components/protected-route"
 import { AppLayout } from "@/layouts/app-layout"
 import { LoginPage } from "@/pages/auth/login"
 import { RegisterPage } from "@/pages/auth/register"
@@ -23,9 +24,11 @@ export function App() {
         <Route
           path="/dashboard"
           element={
-            <AppLayout>
-              <DashboardPage />
-            </AppLayout>
+            <ProtectedRoute>
+              <AppLayout>
+                <DashboardPage />
+              </AppLayout>
+            </ProtectedRoute>
           }
         />
         <Route
