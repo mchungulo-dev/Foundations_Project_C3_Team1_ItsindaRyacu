@@ -53,6 +53,7 @@ TABLES_SQL = """
         account_id INTEGER NOT NULL,
         member_name TEXT NOT NULL,
         email TEXT,
+        password TEXT NOT NULL,
         phone TEXT NOT NULL UNIQUE,
         national_id_number INTEGER NOT NULL UNIQUE,
         role TEXT NOT NULL CHECK(role IN('admin', 'chairperson', 'treasurer', 'secretary', 'member')) DEFAULT 'member',
@@ -114,7 +115,8 @@ TABLES_SQL = """
         end_date DATE NOT NULL,
         contribution_amount NUMERIC NOT NULL,
         default_interest_rate NUMERIC NOT NULL,
-        status TEXT NOT NULL CHECK (status IN ('planned', 'active', 'closed')) DEFAULT 'planned',
+        reserve_percentage NUMERIC,
+        status TEXT NOT NULL CHECK (status IN ('active', 'closed')) DEFAULT 'active',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (account_id) REFERENCES group_account(account_id) ON DELETE CASCADE
     );
@@ -269,6 +271,8 @@ def test_permissions():
 
         except sqlite3.Error as e:
             print(f"An error occurred testing permissions: {e}")
+
+
 
 if __name__=="__main__":
     initialize_database()
