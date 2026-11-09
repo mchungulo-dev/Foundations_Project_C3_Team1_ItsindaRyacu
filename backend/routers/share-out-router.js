@@ -6,7 +6,7 @@ const { protect, adminsOrTreasurer, adminsOnly } = require('../middleware/auth')
 
 // POST /api/share-out/calculate - To calculate the total final payout
 
-eouter.pst('/calculate', protect, adminsOrTreasurer, (req, res) => {
+router.post('/calculate', protect, adminsOrTreasurer, (req, res) => {
     const { cycle_id } = req.body;
 
     if (!cycle_id) return res.status(400).json({ error: "Cycle_id is required" });

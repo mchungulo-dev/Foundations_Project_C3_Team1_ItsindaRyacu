@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
-const { protect, adminOnly } = require('../middleware/auth');
+const { protect, adminsOnly } = require('../middleware/auth');
 
 // POST /api/cycles -Create new cycle(admins)
-router.post('/', protect, adminOnly, (req, res) => {
+router.post('/', protect, adminsOnly, (req, res) => {
     const { start_date, end_date, contribution_amount} = req.body;
 
     if(!start_date || !contribution_amount){
@@ -41,7 +41,7 @@ router.get('/', protect, (req, res) => {
 });
 
 // PUT /api/cycles/:id/close - Close a cycle
-router.put('/:id/close', protect, adminOnly, (req, res) => {
+router.put('/:id/close', protect, adminsOnly, (req, res) => {
     const cycle_id = req.params.id;
 
     try{

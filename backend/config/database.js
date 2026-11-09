@@ -1,7 +1,7 @@
 const Database = require('better-sqlite3')
 const path = require('path')
 
-const dbPath = path.resolve(__dirname, '../../scripts/database/Ibimina_database.db')
+const dbPath = path.resolve(__dirname, '../../database/Ibimina_database.db')
 
 // Connect to SQLite
 const db = new Database(dbPath)

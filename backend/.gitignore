@@ -10,3 +10,5 @@ backend/.env
 *.db
 *.sqlite
 *.sqlite3
+
+Z_testing_data
