@@ -1,4 +1,5 @@
 import { RiMenuLine } from "@remixicon/react"
+import { useLocation } from "react-router-dom"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { Button } from "@/components/ui/button"
 import { SheetTrigger } from "@/components/ui/sheet"
@@ -9,6 +10,14 @@ import { useI18n } from "@/i18n/i18n-context"
 export function AppHeader() {
   const { session } = useSession()
   const { t } = useI18n()
+  const { pathname } = useLocation()
+  const page = pathname.startsWith("/members")
+    ? t("nav.members")
+    : pathname === "/group"
+      ? t("nav.groupPage")
+      : pathname === "/savings"
+        ? t("nav.savings")
+        : t("nav.overview")
   const initials = session?.initials ?? demoMember.initials
   const name = session?.user.member_name ?? demoMember.name
 
@@ -32,7 +41,7 @@ export function AppHeader() {
           <span className="px-1.5" aria-hidden="true">
             /
           </span>
-          <span className="text-foreground">{t("nav.overview")}</span>
+          <span className="text-foreground">{page}</span>
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-3">

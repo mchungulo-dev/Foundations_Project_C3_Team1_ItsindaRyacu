@@ -1,4 +1,6 @@
 import { RiCalendarLine, RiGroupLine, RiWallet3Line } from "@remixicon/react"
+import { Link } from "react-router-dom"
+import { Button } from "@/components/ui/button"
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -111,13 +113,18 @@ export function DashboardPage({
             {t("dashboard.welcome", { name: welcomeName })}
           </h1>
         </div>
-        <p className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-3 text-sm">
-          <RiCalendarLine
-            className="size-5 text-muted-foreground"
-            aria-hidden="true"
-          />
-          {formatMonthYear(demoSummary.periodDate, locale)}
-        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button render={<Link to="/savings" />} nativeButton={false}>
+            {t("savings.record")}
+          </Button>
+          <p className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-3 text-sm">
+            <RiCalendarLine
+              className="size-5 text-muted-foreground"
+              aria-hidden="true"
+            />
+            {formatMonthYear(demoSummary.periodDate, locale)}
+          </p>
+        </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <Card className="border-0 bg-[#006b4f] text-white">
