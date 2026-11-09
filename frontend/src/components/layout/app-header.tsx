@@ -1,9 +1,14 @@
 import { RiMenuLine } from "@remixicon/react"
 import { Button } from "@/components/ui/button"
 import { SheetTrigger } from "@/components/ui/sheet"
+import { useSession } from "@/context/session-context"
 import { demoMember } from "@/data/demo-data"
 
 export function AppHeader() {
+  const { session } = useSession()
+  const initials = session?.initials ?? demoMember.initials
+  const name = session?.user.member_name ?? demoMember.name
+
   return (
     <header className="flex min-h-20 items-center justify-between gap-3 border-b border-border px-5 sm:px-8 lg:border-0 lg:px-10">
       <div className="flex min-w-0 items-center gap-3">
@@ -27,12 +32,14 @@ export function AppHeader() {
           <span className="text-foreground">Overview</span>
         </p>
       </div>
+      <div className="flex shrink-0 items-center gap-3">
         <span
-          className="hidden size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-medium sm:flex"
-          aria-label={demoMember.name}
+          className="hidden size-9 items-center justify-center rounded-full bg-secondary text-xs font-medium sm:flex"
+          aria-label={name}
         >
-          {demoMember.initials}
+          {initials}
         </span>
+      </div>
     </header>
   )
 }
