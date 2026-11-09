@@ -18,11 +18,13 @@ app.use(express.json())
 // routes
 const adminRegistrationRouter = require('./routers/admin_registration_router')
 const loginRouter = require('./routers/login-router')
-const manageMembersRouter = require('./routers/manage_members-router')
+const manageMembersRouter = require('./routers/manage_members-router') 
+const meetingsRouter = require('./routers/meetingsRoutes')
 
 app.use('/auth/admin', adminRegistrationRouter)
 app.use('/auth/', loginRouter)
 app.use('/admin', manageMembersRouter)
+app.use('/api/meetings', meetingsRouter)
 
 // Check whether the DB is running.
 app.get('/api/test-db', (req, res) => {
