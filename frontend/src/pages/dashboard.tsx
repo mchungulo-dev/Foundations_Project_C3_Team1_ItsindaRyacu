@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { useSession } from "@/context/session-context"
 import {
   demoGroup,
   demoMember,
@@ -30,6 +31,14 @@ export function DashboardPage({
 }: {
   activity?: DemoActivity[]
 }) {
+  const { session } = useSession()
+
+  const welcomeName = session?.firstName ?? demoMember.firstName
+  const groupDisplayName = session?.user.group_name ?? demoGroup.name
+  const groupCardDetail = session
+    ? `${session.roleLabel} · ${session.user.email}`
+    : `${demoGroup.memberCount} members · ${demoGroup.location}`
+
   const contributionPercent = Math.min(
     100,
     Math.round(
@@ -44,9 +53,11 @@ export function DashboardPage({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          Welcome back, {demoMember.firstName}.
-        </h1>
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Welcome back, {welcomeName}.
+          </h1>
+        </div>
         <p className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-3 text-sm">
           <RiCalendarLine
             className="size-5 text-muted-foreground"
@@ -73,10 +84,8 @@ export function DashboardPage({
               Your group
               <RiGroupLine className="size-5" aria-hidden="true" />
             </p>
-            <p className="mt-5 text-2xl font-semibold">{demoGroup.name}</p>
-            <p className="mt-3 text-xs text-muted-foreground">
-              {demoGroup.memberCount} members · {demoGroup.location}
-            </p>
+            <p className="mt-5 text-2xl font-semibold">{groupDisplayName}</p>
+            <p className="mt-3 text-xs text-muted-foreground">{groupCardDetail}</p>
           </CardContent>
         </Card>
         <Card className="sm:col-span-2 xl:col-span-1">
@@ -182,7 +191,7 @@ export function DashboardPage({
           ) : (
             <Table>
               <TableCaption className="sr-only">
-                Contributions for {demoMember.name}
+                Contributions for {session?.user.member_name ?? demoMember.name}
               </TableCaption>
               <TableHeader>
                 <TableRow>
