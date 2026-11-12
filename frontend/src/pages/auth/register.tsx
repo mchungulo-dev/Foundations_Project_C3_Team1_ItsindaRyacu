@@ -10,6 +10,8 @@ import { Link, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useI18n } from "@/i18n/i18n-context"
+import type { MessageKey } from "@/i18n/locales/en"
 import { AuthLayout } from "@/layouts/auth-layout"
 import type { RegisteredAccount } from "@/lib/register-account"
 import {
@@ -20,8 +22,17 @@ import {
   isValidRwandaPhone,
 } from "@/lib/validation"
 
+type FieldName =
+  | "name"
+  | "email"
+  | "phone"
+  | "nationalId"
+  | "password"
+  | "confirmPassword"
+
 export function RegisterPage() {
   const navigate = useNavigate()
+  const { t } = useI18n()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
@@ -29,7 +40,8 @@ export function RegisterPage() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [errors, setErrors] = useState({
+  // Errors are stored as message keys so they re-translate when the language changes.
+  const [errors, setErrors] = useState<Record<FieldName, MessageKey | "">>({
     name: "",
     email: "",
     phone: "",
@@ -41,22 +53,18 @@ export function RegisterPage() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    const nextErrors = {
-      name: name.trim() ? "" : "Enter your full name.",
-      email: isValidEmail(email) ? "" : "Enter a valid email address.",
-      phone: isValidRwandaPhone(phone)
-        ? ""
-        : "Enter a valid number, e.g. 0788 123 456.",
+    const nextErrors: Record<FieldName, MessageKey | ""> = {
+      name: name.trim() ? "" : "validation.nameRequired",
+      email: isValidEmail(email) ? "" : "validation.emailInvalid",
+      phone: isValidRwandaPhone(phone) ? "" : "validation.phoneInvalid",
       nationalId: isValidNationalId(nationalId)
         ? ""
-        : "Enter your 16-digit national ID number.",
-      password: isValidPassword(password)
-        ? ""
-        : "Use at least 8 characters.",
+        : "validation.nationalIdInvalid",
+      password: isValidPassword(password) ? "" : "validation.passwordShort",
       confirmPassword: !confirmPassword
-        ? "Confirm your password."
+        ? "validation.confirmRequired"
         : confirmPassword !== password
-          ? "Passwords do not match."
+          ? "validation.passwordMismatch"
           : "",
     }
     setErrors(nextErrors)
@@ -84,10 +92,10 @@ export function RegisterPage() {
         >
           <RiCheckLine className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
           <div className="space-y-1">
-            <p className="font-medium text-foreground">Account created.</p>
-            <p>
-              Next, set up your savings group. You will be the group admin.
+            <p className="font-medium text-foreground">
+              {t("register.successTitle")}
             </p>
+            <p>{t("register.successBody")}</p>
           </div>
         </div>
 
@@ -100,7 +108,7 @@ export function RegisterPage() {
             }
           >
             <RiTeamLine aria-hidden="true" />
-            Create a savings group
+            {t("register.createGroup")}
             <RiArrowRightLine aria-hidden="true" />
           </Button>
           <Button
@@ -110,7 +118,7 @@ export function RegisterPage() {
             size="lg"
             className="w-full"
           >
-            Skip for now · Sign in
+            {t("register.skip")}
           </Button>
         </div>
       </AuthLayout>
@@ -120,15 +128,15 @@ export function RegisterPage() {
   return (
     <AuthLayout>
       <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-        Create an account
+        {t("register.title")}
       </h1>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        Register to start a savings group.
+        {t("register.subtitle")}
       </p>
 
       <form onSubmit={handleSubmit} noValidate className="mt-8 space-y-6">
         <div className="space-y-2.5">
-          <Label htmlFor="register-name">Full name</Label>
+          <Label htmlFor="register-name">{t("register.name")}</Label>
           <Input
             id="register-name"
             autoComplete="name"
@@ -145,12 +153,12 @@ export function RegisterPage() {
               role="alert"
               className="text-sm text-destructive"
             >
-              {errors.name}
+              {t(errors.name)}
             </p>
           ) : null}
         </div>
         <div className="space-y-2.5">
-          <Label htmlFor="register-email">Email</Label>
+          <Label htmlFor="register-email">{t("register.email")}</Label>
           <Input
             id="register-email"
             type="email"
@@ -168,12 +176,12 @@ export function RegisterPage() {
               role="alert"
               className="text-sm text-destructive"
             >
-              {errors.email}
+              {t(errors.email)}
             </p>
           ) : null}
         </div>
         <div className="space-y-2.5">
-          <Label htmlFor="register-phone">Phone number</Label>
+          <Label htmlFor="register-phone">{t("register.phone")}</Label>
           <Input
             id="register-phone"
             type="tel"
@@ -191,12 +199,12 @@ export function RegisterPage() {
               role="alert"
               className="text-sm text-destructive"
             >
-              {errors.phone}
+              {t(errors.phone)}
             </p>
           ) : null}
         </div>
         <div className="space-y-2.5">
-          <Label htmlFor="register-national-id">National ID number</Label>
+          <Label htmlFor="register-national-id">{t("register.nationalId")}</Label>
           <Input
             id="register-national-id"
             inputMode="numeric"
@@ -219,18 +227,18 @@ export function RegisterPage() {
               role="alert"
               className="text-sm text-destructive"
             >
-              {errors.nationalId}
+              {t(errors.nationalId)}
             </p>
           ) : null}
         </div>
         <div className="space-y-2.5">
-          <Label htmlFor="register-password">Password</Label>
+          <Label htmlFor="register-password">{t("register.password")}</Label>
           <div className="relative">
             <Input
               id="register-password"
               type={showPassword ? "text" : "password"}
               autoComplete="new-password"
-              placeholder="At least 8 characters"
+              placeholder={t("register.passwordPlaceholder")}
               className="pr-14"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
@@ -245,7 +253,7 @@ export function RegisterPage() {
               variant="ghost"
               size="icon-sm"
               className="absolute top-1.5 right-2"
-              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-label={showPassword ? t("password.hide") : t("password.show")}
               aria-pressed={showPassword}
               onClick={() => setShowPassword(!showPassword)}
             >
@@ -262,18 +270,20 @@ export function RegisterPage() {
               role="alert"
               className="text-sm text-destructive"
             >
-              {errors.password}
+              {t(errors.password)}
             </p>
           ) : null}
         </div>
         <div className="space-y-2.5">
-          <Label htmlFor="register-confirm-password">Confirm password</Label>
+          <Label htmlFor="register-confirm-password">
+            {t("register.confirmPassword")}
+          </Label>
           <div className="relative">
             <Input
               id="register-confirm-password"
               type={showPassword ? "text" : "password"}
               autoComplete="new-password"
-              placeholder="Re-enter your password"
+              placeholder={t("register.confirmPasswordPlaceholder")}
               className="pr-14"
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
@@ -290,7 +300,7 @@ export function RegisterPage() {
               variant="ghost"
               size="icon-sm"
               className="absolute top-1.5 right-2"
-              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-label={showPassword ? t("password.hide") : t("password.show")}
               aria-pressed={showPassword}
               onClick={() => setShowPassword(!showPassword)}
             >
@@ -307,23 +317,23 @@ export function RegisterPage() {
               role="alert"
               className="text-sm text-destructive"
             >
-              {errors.confirmPassword}
+              {t(errors.confirmPassword)}
             </p>
           ) : null}
         </div>
         <Button type="submit" size="lg" className="w-full">
-          Create account
+          {t("register.submit")}
           <RiArrowRightLine aria-hidden="true" />
         </Button>
       </form>
 
       <p className="mt-7 text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
+        {t("register.haveAccount")}{" "}
         <Link
           to="/login"
           className="font-medium text-brand underline-offset-4 hover:underline"
         >
-          Sign in
+          {t("action.signIn")}
         </Link>
       </p>
     </AuthLayout>
