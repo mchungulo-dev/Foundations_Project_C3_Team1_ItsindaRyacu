@@ -16,16 +16,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { apiErrorText, translateBackendMessage } from "@/i18n/api-messages"
+import { useI18n } from "@/i18n/i18n-context"
+import type { MessageKey } from "@/i18n/locales/en"
 import { AuthLayout } from "@/layouts/auth-layout"
 import {
   adminRegisterRequest,
-  ApiError,
   type AdminRegisterResponse,
 } from "@/lib/api"
 import { isRegisteredAccount } from "@/lib/register-account"
 import { isValidMeetingTime } from "@/lib/validation"
 
-const STEPS = ["Group details", "Meetings"] as const
+const STEP_KEYS = ["createGroup.stepDetails", "createGroup.stepMeetings"] as const
+// These English values are what the API receives. Only the labels are translated.
 const MEETING_DAYS = [
   "Monday",
   "Tuesday",
@@ -35,6 +38,16 @@ const MEETING_DAYS = [
   "Saturday",
   "Sunday",
 ] as const
+
+const DAY_KEYS: Record<(typeof MEETING_DAYS)[number], MessageKey> = {
+  Monday: "day.monday",
+  Tuesday: "day.tuesday",
+  Wednesday: "day.wednesday",
+  Thursday: "day.thursday",
+  Friday: "day.friday",
+  Saturday: "day.saturday",
+  Sunday: "day.sunday",
+}
 
 type GroupFormData = {
   groupName: string
@@ -57,15 +70,17 @@ const initialForm: GroupFormData = {
 export function CreateGroupPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useI18n()
   const account = isRegisteredAccount(location.state?.account)
     ? location.state.account
     : null
 
   const [step, setStep] = useState(0)
   const [form, setForm] = useState(initialForm)
-  const [errors, setErrors] = useState<Partial<Record<keyof GroupFormData, string>>>(
-    {}
-  )
+  // Errors are stored as message keys so they re-translate when the language changes.
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof GroupFormData, MessageKey | "">>
+  >({})
   const [submitting, setSubmitting] = useState(false)
   const [apiError, setApiError] = useState("")
   const [success, setSuccess] = useState<AdminRegisterResponse | null>(null)
@@ -84,33 +99,33 @@ export function CreateGroupPage() {
   }
 
   function validateStep(currentStep: number) {
-    const next: Partial<Record<keyof GroupFormData, string>> = {}
+    const next: Partial<Record<keyof GroupFormData, MessageKey>> = {}
 
     if (currentStep === 0) {
       if (form.groupName.trim().length < 2) {
-        next.groupName = "Enter your group name (at least 2 characters)."
+        next.groupName = "validation.groupNameShort"
       }
       if (!form.savingsAmount.trim()) {
-        next.savingsAmount = "Enter the monthly savings amount."
+        next.savingsAmount = "validation.savingsRequired"
       } else if (
         Number.isNaN(Number(form.savingsAmount)) ||
         Number(form.savingsAmount) <= 0
       ) {
-        next.savingsAmount = "Enter a valid amount in RWF."
+        next.savingsAmount = "validation.savingsInvalid"
       }
     }
 
     if (currentStep === 1) {
       if (!form.meetingDay) {
-        next.meetingDay = "Choose a meeting day."
+        next.meetingDay = "validation.meetingDayRequired"
       }
       if (!form.meetingTime) {
-        next.meetingTime = "Choose a meeting time."
+        next.meetingTime = "validation.meetingTimeRequired"
       } else if (!isValidMeetingTime(form.meetingTime)) {
-        next.meetingTime = "Use a 24-hour time, e.g. 16:00."
+        next.meetingTime = "validation.meetingTimeInvalid"
       }
       if (!form.startDate) {
-        next.startDate = "Choose a start date."
+        next.startDate = "validation.startDateRequired"
       }
     }
 
@@ -123,7 +138,7 @@ export function CreateGroupPage() {
     if (!validateStep(step)) {
       return
     }
-    if (step < STEPS.length - 1) {
+    if (step < STEP_KEYS.length - 1) {
       setStep(step + 1)
       return
     }
@@ -141,11 +156,7 @@ export function CreateGroupPage() {
       })
       setSuccess(data)
     } catch (error) {
-      if (error instanceof ApiError) {
-        setApiError(error.message)
-        return
-      }
-      setApiError("Could not reach the server. Is it running?")
+      setApiError(apiErrorText(error, t))
     } finally {
       setSubmitting(false)
     }
@@ -158,7 +169,7 @@ export function CreateGroupPage() {
   const progressValue =
     success !== null
       ? 100
-      : Math.round(((step + 1) / STEPS.length) * 100)
+      : Math.round(((step + 1) / STEP_KEYS.length) * 100)
 
   if (success) {
     return (
@@ -169,10 +180,13 @@ export function CreateGroupPage() {
         >
           <RiCheckLine className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
           <div className="space-y-1">
-            <p className="font-medium text-foreground">{success.message}</p>
+            <p className="font-medium text-foreground">
+              {translateBackendMessage(success.message, t)}
+            </p>
             <p>
-              <span className="font-medium">{success.group_name}</span> · sign
-              in as <span className="font-medium">{success.admin_email}</span>.
+              <span className="font-medium">{success.group_name}</span>
+              {t("createGroup.signInAs")}
+              <span className="font-medium">{success.admin_email}</span>.
             </p>
           </div>
         </div>
@@ -182,7 +196,7 @@ export function CreateGroupPage() {
           className="mt-8 w-full"
           onClick={() => navigate("/login")}
         >
-          Sign in
+          {t("action.signIn")}
           <RiArrowRightLine aria-hidden="true" />
         </Button>
       </AuthLayout>
@@ -191,14 +205,20 @@ export function CreateGroupPage() {
 
   return (
     <AuthLayout>
-      <p className="text-sm text-muted-foreground">Start a savings group</p>
+      <p className="text-sm text-muted-foreground">
+        {t("createGroup.eyebrow")}
+      </p>
       <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
-        Create your group
+        {t("createGroup.title")}
       </h1>
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        Step {step + 1} of {STEPS.length} · {STEPS[step]}.{" "}
-        <span className="font-medium text-foreground">{account.name}</span> will be
-        the group admin.
+        {t("createGroup.step", {
+          current: step + 1,
+          total: STEP_KEYS.length,
+          label: t(STEP_KEYS[step]),
+        })}{" "}
+        <span className="font-medium text-foreground">{account.name}</span>{" "}
+        {t("createGroup.adminSuffix")}
       </p>
 
       <Progress
@@ -219,7 +239,7 @@ export function CreateGroupPage() {
         {step === 0 ? (
           <>
             <div className="space-y-2.5">
-              <Label htmlFor="group-name">Group name</Label>
+              <Label htmlFor="group-name">{t("createGroup.groupName")}</Label>
               <Input
                 id="group-name"
                 autoComplete="organization"
@@ -241,12 +261,12 @@ export function CreateGroupPage() {
                   role="alert"
                   className="text-sm text-destructive"
                 >
-                  {errors.groupName}
+                  {t(errors.groupName)}
                 </p>
               ) : null}
             </div>
             <div className="space-y-2.5">
-              <Label htmlFor="group-location">Location (optional)</Label>
+              <Label htmlFor="group-location">{t("createGroup.location")}</Label>
               <Input
                 id="group-location"
                 autoComplete="address-level2"
@@ -259,7 +279,7 @@ export function CreateGroupPage() {
               />
             </div>
             <div className="space-y-2.5">
-              <Label htmlFor="savings-amount">Monthly savings (RWF)</Label>
+              <Label htmlFor="savings-amount">{t("createGroup.savings")}</Label>
               <Input
                 id="savings-amount"
                 type="number"
@@ -283,7 +303,7 @@ export function CreateGroupPage() {
                   role="alert"
                   className="text-sm text-destructive"
                 >
-                  {errors.savingsAmount}
+                  {t(errors.savingsAmount)}
                 </p>
               ) : null}
             </div>
@@ -293,7 +313,7 @@ export function CreateGroupPage() {
         {step === 1 ? (
           <>
             <div className="space-y-2.5">
-              <Label htmlFor="meeting-day">Meeting day</Label>
+              <Label htmlFor="meeting-day">{t("createGroup.meetingDay")}</Label>
               <Select
                 value={form.meetingDay || null}
                 onValueChange={(value) => updateField("meetingDay", value ?? "")}
@@ -307,12 +327,18 @@ export function CreateGroupPage() {
                     errors.meetingDay ? "meeting-day-error" : undefined
                   }
                 >
-                  <SelectValue placeholder="Choose a day" />
+                  <SelectValue placeholder={t("createGroup.chooseDay")}>
+                    {(value: string | null) =>
+                      value && value in DAY_KEYS
+                        ? t(DAY_KEYS[value as keyof typeof DAY_KEYS])
+                        : t("createGroup.chooseDay")
+                    }
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {MEETING_DAYS.map((day) => (
                     <SelectItem key={day} value={day}>
-                      {day}
+                      {t(DAY_KEYS[day])}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -323,12 +349,12 @@ export function CreateGroupPage() {
                   role="alert"
                   className="text-sm text-destructive"
                 >
-                  {errors.meetingDay}
+                  {t(errors.meetingDay)}
                 </p>
               ) : null}
             </div>
             <div className="space-y-2.5">
-              <Label htmlFor="meeting-time">Meeting time</Label>
+              <Label htmlFor="meeting-time">{t("createGroup.meetingTime")}</Label>
               <Input
                 id="meeting-time"
                 type="time"
@@ -349,12 +375,12 @@ export function CreateGroupPage() {
                   role="alert"
                   className="text-sm text-destructive"
                 >
-                  {errors.meetingTime}
+                  {t(errors.meetingTime)}
                 </p>
               ) : null}
             </div>
             <div className="space-y-2.5">
-              <Label htmlFor="start-date">Start date</Label>
+              <Label htmlFor="start-date">{t("createGroup.startDate")}</Label>
               <Input
                 id="start-date"
                 type="date"
@@ -375,7 +401,7 @@ export function CreateGroupPage() {
                   role="alert"
                   className="text-sm text-destructive"
                 >
-                  {errors.startDate}
+                  {t(errors.startDate)}
                 </p>
               ) : null}
             </div>
@@ -393,7 +419,7 @@ export function CreateGroupPage() {
               onClick={handleBack}
             >
               <RiArrowLeftLine aria-hidden="true" />
-              Back
+              {t("createGroup.back")}
             </Button>
           ) : null}
           <Button
@@ -402,11 +428,11 @@ export function CreateGroupPage() {
             className={step > 0 ? "sm:flex-1" : "w-full"}
             disabled={submitting}
           >
-            {step === STEPS.length - 1
+            {step === STEP_KEYS.length - 1
               ? submitting
-                ? "Creating…"
-                : "Create group"
-              : "Continue"}
+                ? t("createGroup.submitting")
+                : t("createGroup.submit")
+              : t("createGroup.continue")}
             <RiArrowRightLine aria-hidden="true" />
           </Button>
         </div>
@@ -417,7 +443,7 @@ export function CreateGroupPage() {
           to="/register"
           className="font-medium text-brand underline-offset-4 hover:underline"
         >
-          Back to sign up
+          {t("createGroup.backToSignUp")}
         </Link>
       </p>
     </AuthLayout>
