@@ -1,30 +1,71 @@
 import { useState, type FormEvent } from "react"
 import { RiArrowRightLine, RiEyeLine, RiEyeOffLine } from "@remixicon/react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AuthLayout } from "@/layouts/auth-layout"
-import { isValidRwandaPhone } from "@/lib/validation"
+import { useSession } from "@/context/session-context"
+import { applyLoginSuccess, ApiError, loginRequest } from "@/lib/api"
+import { isValidEmail } from "@/lib/validation"
+
+function destinationFromLogin(redirectTo: string | undefined): string {
+  if (redirectTo === "/admin" || redirectTo === "/member") {
+    return "/dashboard"
+  }
+  return redirectTo ?? "/dashboard"
+}
+
+function isSafeInternalPath(path: unknown): path is string {
+  return (
+    typeof path === "string" &&
+    path.startsWith("/") &&
+    !path.startsWith("//") &&
+    !path.includes("..")
+  )
+}
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const [phone, setPhone] = useState("")
-  const [pin, setPin] = useState("")
-  const [showPin, setShowPin] = useState(false)
-  const [errors, setErrors] = useState({ phone: "", pin: "" })
+  const location = useLocation()
+  const { setLoginSession } = useSession()
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [errors, setErrors] = useState({ email: "", password: "" })
+  const [submitting, setSubmitting] = useState(false)
+  const [apiError, setApiError] = useState("")
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    setApiError("")
     const nextErrors = {
-      phone: isValidRwandaPhone(phone)
-        ? ""
-        : "Enter a valid number, e.g. 0788 123 456.",
-      pin: /^\d{4}$/.test(pin) ? "" : "Enter a 4-digit PIN.",
+      email: isValidEmail(email) ? "" : "Enter a valid email address.",
+      password: password ? "" : "Enter your password.",
     }
     setErrors(nextErrors)
-    if (!nextErrors.phone && !nextErrors.pin) {
-      navigate("/dashboard")
+    if (nextErrors.email || nextErrors.password) {
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      const data = await loginRequest(email, password)
+      applyLoginSuccess(data)
+      setLoginSession(data)
+      const state = location.state as { from?: unknown } | null
+      const afterLogin = isSafeInternalPath(state?.from)
+        ? state.from
+        : destinationFromLogin(data.redirect_to)
+      navigate(afterLogin, { replace: true })
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setApiError(error.message)
+        return
+      }
+      setApiError("Could not reach the server. Is it running?")
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -34,44 +75,54 @@ export function LoginPage() {
         Sign in
       </h1>
       <form onSubmit={handleSubmit} noValidate className="mt-8 space-y-6">
+        {apiError ? (
+          <p
+            role="alert"
+            className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+          >
+            {apiError}
+          </p>
+        ) : null}
         <div className="space-y-2.5">
-          <Label htmlFor="login-phone">Phone number</Label>
+          <Label htmlFor="login-email">Email</Label>
           <Input
-            id="login-phone"
-            type="tel"
-            autoComplete="tel"
-            placeholder="0788 123 456"
-            value={phone}
-            onChange={(event) => setPhone(event.target.value)}
-            aria-invalid={Boolean(errors.phone)}
-            aria-describedby={errors.phone ? "login-phone-error" : undefined}
+            id="login-email"
+            type="email"
+            autoComplete="email"
+            placeholder="aline@example.com"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            aria-invalid={Boolean(errors.email)}
+            aria-describedby={errors.email ? "login-email-error" : undefined}
+            disabled={submitting}
             required
           />
-          {errors.phone ? (
+          {errors.email ? (
             <p
-              id="login-phone-error"
+              id="login-email-error"
               role="alert"
               className="text-sm text-destructive"
             >
-              {errors.phone}
+              {errors.email}
             </p>
           ) : null}
         </div>
         <div className="space-y-2.5">
-          <Label htmlFor="login-pin">4-digit PIN</Label>
+          <Label htmlFor="login-password">Password</Label>
           <div className="relative">
             <Input
-              id="login-pin"
-              type={showPin ? "text" : "password"}
-              inputMode="numeric"
-              autoComplete="off"
-              maxLength={4}
-              placeholder="Enter your PIN"
+              id="login-password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              placeholder="Enter your password"
               className="pr-14"
-              value={pin}
-              onChange={(event) => setPin(event.target.value)}
-              aria-invalid={Boolean(errors.pin)}
-              aria-describedby={errors.pin ? "login-pin-error" : undefined}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              aria-invalid={Boolean(errors.password)}
+              aria-describedby={
+                errors.password ? "login-password-error" : undefined
+              }
+              disabled={submitting}
               required
             />
             <Button
@@ -79,29 +130,30 @@ export function LoginPage() {
               variant="ghost"
               size="icon-sm"
               className="absolute top-1.5 right-2"
-              aria-label={showPin ? "Hide PIN" : "Show PIN"}
-              aria-pressed={showPin}
-              onClick={() => setShowPin(!showPin)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+              disabled={submitting}
+              onClick={() => setShowPassword(!showPassword)}
             >
-              {showPin ? (
+              {showPassword ? (
                 <RiEyeOffLine aria-hidden="true" />
               ) : (
                 <RiEyeLine aria-hidden="true" />
               )}
             </Button>
           </div>
-          {errors.pin ? (
+          {errors.password ? (
             <p
-              id="login-pin-error"
+              id="login-password-error"
               role="alert"
               className="text-sm text-destructive"
             >
-              {errors.pin}
+              {errors.password}
             </p>
           ) : null}
         </div>
-        <Button type="submit" size="lg" className="w-full">
-          Sign in
+        <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+          {submitting ? "Signing in…" : "Sign in"}
           <RiArrowRightLine aria-hidden="true" />
         </Button>
       </form>

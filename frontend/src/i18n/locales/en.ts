@@ -1,0 +1,220 @@
+// English is the source of truth. Every key added here must also be added to
+// rw.ts: rw.ts is typed against these keys, so a missing translation fails
+// `npm run build`. Use {name} placeholders for values inserted at runtime.
+export const en = {
+  // App shell
+  "app.title": "Itsinda Ryacu · Group savings",
+  "app.skipToContent": "Skip to content",
+  "notFound.eyebrow": "404 · PAGE NOT FOUND",
+  "notFound.title": "This page isn’t here.",
+  "notFound.body": "Check the address or return to the sign-in page.",
+  "notFound.back": "Back to sign in",
+
+  // Shared
+  "language.label": "Language",
+  "nav.overview": "Overview",
+  "nav.main": "Main navigation",
+  "nav.open": "Open navigation",
+  "nav.group": "Group navigation",
+  "nav.groupPages": "Group pages",
+  "nav.workspace": "Workspace",
+  "action.signIn": "Sign in",
+  "action.logOut": "Log out",
+  "password.show": "Show password",
+  "password.hide": "Hide password",
+  "role.admin": "Group admin",
+  "role.member": "Group member",
+  "role.chairperson": "Chairperson",
+  "role.treasurer": "Treasurer",
+  "role.secretary": "Secretary",
+
+  // Auth layout
+  "auth.taglineOne": "Save together.",
+  "auth.taglineTwo": "Grow together.",
+  "auth.illustrationAlt": "Group members contributing to a shared savings fund",
+  "auth.memberAccess": "Member access",
+  "auth.footer": "© 2026 Itsinda Ryacu",
+
+  // Login
+  "login.title": "Sign in",
+  "login.email": "Email",
+  "login.password": "Password",
+  "login.passwordPlaceholder": "Enter your password",
+  "login.submitting": "Signing in…",
+  "login.noAccount": "No account?",
+  "login.createAccount": "Create an account",
+
+  // Register
+  "register.title": "Create an account",
+  "register.subtitle": "Register to start a savings group.",
+  "register.name": "Full name",
+  "register.email": "Email",
+  "register.phone": "Phone number",
+  "register.nationalId": "National ID number",
+  "register.password": "Password",
+  "register.passwordPlaceholder": "At least 8 characters",
+  "register.confirmPassword": "Confirm password",
+  "register.confirmPasswordPlaceholder": "Re-enter your password",
+  "register.submit": "Create account",
+  "register.haveAccount": "Already have an account?",
+  "register.successTitle": "Account created.",
+  "register.successBody":
+    "Next, set up your savings group. You will be the group admin.",
+  "register.createGroup": "Create a savings group",
+  "register.skip": "Skip for now · Sign in",
+
+  // Create group
+  "createGroup.eyebrow": "Start a savings group",
+  "createGroup.title": "Create your group",
+  "createGroup.step": "Step {current} of {total} · {label}.",
+  "createGroup.adminSuffix": "will be the group admin.",
+  "createGroup.stepDetails": "Group details",
+  "createGroup.stepMeetings": "Meetings",
+  "createGroup.groupName": "Group name",
+  "createGroup.location": "Location (optional)",
+  "createGroup.savings": "Monthly savings (RWF)",
+  "createGroup.meetingDay": "Meeting day",
+  "createGroup.chooseDay": "Choose a day",
+  "createGroup.meetingTime": "Meeting time",
+  "createGroup.startDate": "Start date",
+  "createGroup.back": "Back",
+  "createGroup.continue": "Continue",
+  "createGroup.submit": "Create group",
+  "createGroup.submitting": "Creating…",
+  "createGroup.backToSignUp": "Back to sign up",
+  "createGroup.signInAs": " · sign in as ",
+
+  // Days (the English value is what the API receives; only labels change)
+  "day.monday": "Monday",
+  "day.tuesday": "Tuesday",
+  "day.wednesday": "Wednesday",
+  "day.thursday": "Thursday",
+  "day.friday": "Friday",
+  "day.saturday": "Saturday",
+  "day.sunday": "Sunday",
+
+  // Form validation
+  "validation.emailInvalid": "Enter a valid email address.",
+  "validation.passwordRequired": "Enter your password.",
+  "validation.nameRequired": "Enter your full name.",
+  "validation.phoneInvalid": "Enter a valid number, e.g. 0788 123 456.",
+  "validation.nationalIdInvalid": "Enter your 16-digit national ID number.",
+  "validation.passwordShort": "Use at least 8 characters.",
+  "validation.confirmRequired": "Confirm your password.",
+  "validation.passwordMismatch": "Passwords do not match.",
+  "validation.groupNameShort":
+    "Enter your group name (at least 2 characters).",
+  "validation.savingsRequired": "Enter the monthly savings amount.",
+  "validation.savingsInvalid": "Enter a valid amount in RWF.",
+  "validation.meetingDayRequired": "Choose a meeting day.",
+  "validation.meetingTimeRequired": "Choose a meeting time.",
+  "validation.meetingTimeInvalid": "Use a 24-hour time, e.g. 16:00.",
+  "validation.startDateRequired": "Choose a start date.",
+
+  // Messages returned by the backend (see src/i18n/api-messages.ts)
+  "api.network": "Could not reach the server. Is it running?",
+  "api.generic": "Something went wrong.",
+  "api.invalidCredentials": "Invalid email or password!",
+  "api.inactive": "Your account or savings group is inactive!",
+  "api.noCredentials":
+    "Login credentials have not been set up for this account.",
+  "api.validation": "Validation failed!",
+  "api.groupEmailExists": "A group with this admin email already exists!",
+  "api.duplicateIdentity": "Email, phone number or national ID already exists!",
+  "api.server": "Internal Server Error!",
+  "api.groupRegistered": "Savings group registered successfully!",
+
+  // Dashboard
+  "dashboard.welcome": "Welcome back, {name}.",
+  "dashboard.totalSavings": "Your total savings",
+  "dashboard.thisMonth": "+ {amount} this month",
+  "dashboard.group": "Your group",
+  "dashboard.membersAndLocation": "{count} members · {location}",
+  "dashboard.monthlyContribution": "Monthly contribution",
+  "dashboard.goalProgress": "{percent}% of your {month} goal",
+  "dashboard.savingsHistory": "Savings history",
+  "dashboard.lastSixMonths": "Last 6 months · RWF",
+  "dashboard.chartSeries": "Total savings",
+  "dashboard.chartSummary":
+    "Savings increased from {from} in {fromMonth} to {to} in {toMonth}",
+  "dashboard.goalEyebrow": "THIS MONTH’S GOAL",
+  "dashboard.toGo": "{amount} to go.",
+  "dashboard.monthlyTarget": "Monthly target: {amount}",
+  "dashboard.recentActivity": "Recent activity",
+  "dashboard.noContributions": "No contributions yet",
+  "dashboard.contributionsFor": "Contributions for {name}",
+  "dashboard.colActivity": "Activity",
+  "dashboard.colDate": "Date",
+  "dashboard.colAmount": "Amount",
+  "dashboard.colStatus": "Status",
+
+  // Navigation links for the management pages
+  "nav.savings": "My savings",
+  "nav.groupPage": "Group",
+  "nav.members": "Members",
+  "action.cancel": "Cancel",
+
+  // Savings
+  "savings.title": "My savings",
+  "savings.record": "Record contribution",
+  "savings.total": "Total savings",
+  "savings.thisMonth": "This month",
+  "savings.monthlyTarget": "Monthly target",
+  "savings.added": "Contribution added.",
+  "savings.amount": "Amount (RWF)",
+  "savings.date": "Date",
+  "savings.save": "Save contribution",
+  "savings.history": "Contribution history",
+  "savings.empty": "No contributions yet",
+  "savings.colDate": "Date",
+  "savings.colAmount": "Amount",
+  "savings.colStatus": "Status",
+  "savings.recorded": "Recorded",
+  "validation.amountInvalid":
+    "Enter an amount in whole RWF greater than zero.",
+  "validation.dateInvalid": "Choose a valid date that is not in the future.",
+  "validation.amountTooLarge": "This amount is too large.",
+
+  // Group page
+  "group.members": "Members",
+  "group.membersTitle": "Group members",
+  "group.manage": "Manage members",
+  "group.noMembers": "No members yet",
+
+  // Members
+  "members.title": "Members",
+  "members.count": "{count} members",
+  "members.add": "Add member",
+  "members.new": "New member",
+  "members.name": "Full name",
+  "members.phone": "Phone number",
+  "members.added": "{name} added.",
+  "members.search": "Search members",
+  "members.searchPlaceholder": "Search name or phone",
+  "members.filterStatus": "Filter by status",
+  "members.allStatuses": "All statuses",
+  "members.statusActive": "Active",
+  "members.statusPending": "Pending",
+  "members.statusInactive": "Inactive",
+  "members.colMember": "Member",
+  "members.colRole": "Role",
+  "members.colStatus": "Status",
+  "members.colSavings": "Savings",
+  "members.emptyNone": "No members yet",
+  "members.emptyFiltered": "No members match your filters",
+  "members.notFound": "Member not found",
+  "members.backToList": "Back to members",
+  "members.details": "Member details",
+  "members.joined": "Joined",
+  "members.group": "Group",
+  "validation.memberInvalid": "Enter a name and a valid phone number.",
+  "validation.memberDuplicate":
+    "This phone number already belongs to a member.",
+
+  // Sample data labels (only needed while the dashboard uses fixtures)
+  "fixture.monthlyContribution": "Monthly savings contribution",
+  "fixture.statusRecorded": "Recorded",
+} as const
+
+export type MessageKey = keyof typeof en
+export type Messages = Record<MessageKey, string>
