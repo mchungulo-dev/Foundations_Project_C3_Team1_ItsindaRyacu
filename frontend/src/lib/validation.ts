@@ -1,4 +1,5 @@
 // Accept 0788123456, 788123456, +250788123456 or 250788123456
+// Spaces and hyphens are allowed
 export function isValidRwandaPhone(phone: string) {
   const digits = phone.replace(/[\s-]/g, "")
   return /^(?:\+?250|0)?7[2389]\d{7}$/.test(digits)
@@ -20,7 +21,7 @@ export function normalizePhoneDigits(phone: string) {
   return phone.replace(/[\s-]/g, "")
 }
 
-/** Format for backend: Joi /^[0-9+]{10,15}$/ - use +250… for Rwanda mobiles */
+/** Format for backend: Joi /^[0-9+]{10,15}$/ — use +250… for Rwanda mobiles */
 export function phoneForApi(phone: string): string {
   const digits = normalizePhoneDigits(phone)
   if (digits.startsWith("+250")) {
@@ -45,4 +46,29 @@ export function isValidNationalId(nationalId: string) {
 export function digitsOnly(value: string, maxLength?: number) {
   const digits = value.replace(/\D/g, "")
   return maxLength === undefined ? digits : digits.slice(0, maxLength)
+}
+
+// Whole RWF, greater than zero
+export function isValidAmount(value: string) {
+  return (
+    /^\d+$/.test(value) &&
+    Number.isSafeInteger(Number(value)) &&
+    Number(value) > 0
+  )
+}
+
+// A real calendar date written as YYYY-MM-DD
+export function isValidDate(value: string) {
+  const date = new Date(value)
+  return (
+    /^\d{4}-\d{2}-\d{2}$/.test(value) &&
+    !Number.isNaN(date.getTime()) &&
+    date.toISOString().slice(0, 10) === value
+  )
+}
+
+// Digits without the country code or leading zero, so different ways of
+// writing the same number compare equal: 0788 123 456 and +250788123456.
+export function normalizePhone(phone: string) {
+  return phone.replace(/\D/g, "").replace(/^(?:250|0)/, "")
 }

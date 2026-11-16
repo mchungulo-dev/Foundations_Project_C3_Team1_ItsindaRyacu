@@ -15,8 +15,7 @@ const BACKEND_MESSAGES: Record<string, MessageKey> = {
     "api.noCredentials",
   "Validation failed!": "api.validation",
   "A group with this admin email already exists!": "api.groupEmailExists",
-  "Email, phone number or national ID already exists!":
-    "api.duplicateIdentity",
+  "Email, phone number or national ID already exists!": "api.duplicateIdentity",
   "Internal Server Error!": "api.server",
   "Savings group registered successfully!": "api.groupRegistered",
 }
@@ -29,6 +28,12 @@ export function translateBackendMessage(message: string, t: Translate) {
 // Text for any error thrown by an API call.
 export function apiErrorText(error: unknown, t: Translate) {
   if (error instanceof ApiError) {
+    if (
+      error.status === 403 &&
+      !(error.body && typeof error.body === "object" && "message" in error.body)
+    ) {
+      return t("api.forbidden")
+    }
     return translateBackendMessage(error.message, t)
   }
   return t("api.network")
