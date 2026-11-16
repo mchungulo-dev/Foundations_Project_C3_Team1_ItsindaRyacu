@@ -6,7 +6,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AuthLayout } from "@/layouts/auth-layout"
 import { useSession } from "@/context/session-context"
-import { applyLoginSuccess, ApiError, loginRequest } from "@/lib/api"
+import { apiErrorText } from "@/i18n/api-messages"
+import { useI18n } from "@/i18n/i18n-context"
+import type { MessageKey } from "@/i18n/locales/en"
+import { applyLoginSuccess, loginRequest } from "@/lib/api"
 import { isValidEmail } from "@/lib/validation"
 
 function destinationFromLogin(redirectTo: string | undefined): string {
@@ -25,23 +28,29 @@ function isSafeInternalPath(path: unknown): path is string {
   )
 }
 
+type LoginErrors = { email: MessageKey | ""; password: MessageKey | "" }
+
 export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { setLoginSession } = useSession()
+  const { t } = useI18n()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [errors, setErrors] = useState({ email: "", password: "" })
+  // Errors are stored as message keys so they re-translate when the language changes.
+  const [errors, setErrors] = useState<LoginErrors>({ email: "", password: "" })
   const [submitting, setSubmitting] = useState(false)
   const [apiError, setApiError] = useState("")
+  const expiredNotice =
+    (location.state as { expired?: unknown } | null)?.expired === true
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setApiError("")
-    const nextErrors = {
-      email: isValidEmail(email) ? "" : "Enter a valid email address.",
-      password: password ? "" : "Enter your password.",
+    const nextErrors: LoginErrors = {
+      email: isValidEmail(email) ? "" : "validation.emailInvalid",
+      password: password ? "" : "validation.passwordRequired",
     }
     setErrors(nextErrors)
     if (nextErrors.email || nextErrors.password) {
@@ -59,11 +68,7 @@ export function LoginPage() {
         : destinationFromLogin(data.redirect_to)
       navigate(afterLogin, { replace: true })
     } catch (error) {
-      if (error instanceof ApiError) {
-        setApiError(error.message)
-        return
-      }
-      setApiError("Could not reach the server. Is it running?")
+      setApiError(apiErrorText(error, t))
     } finally {
       setSubmitting(false)
     }
@@ -72,9 +77,17 @@ export function LoginPage() {
   return (
     <AuthLayout>
       <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-        Sign in
+        {t("login.title")}
       </h1>
       <form onSubmit={handleSubmit} noValidate className="mt-8 space-y-6">
+        {expiredNotice ? (
+          <p
+            role="status"
+            className="rounded-lg border border-border bg-secondary px-4 py-3 text-sm"
+          >
+            {t("login.sessionExpired")}
+          </p>
+        ) : null}
         {apiError ? (
           <p
             role="alert"
@@ -84,7 +97,7 @@ export function LoginPage() {
           </p>
         ) : null}
         <div className="space-y-2.5">
-          <Label htmlFor="login-email">Email</Label>
+          <Label htmlFor="login-email">{t("login.email")}</Label>
           <Input
             id="login-email"
             type="email"
@@ -103,18 +116,18 @@ export function LoginPage() {
               role="alert"
               className="text-sm text-destructive"
             >
-              {errors.email}
+              {t(errors.email)}
             </p>
           ) : null}
         </div>
         <div className="space-y-2.5">
-          <Label htmlFor="login-password">Password</Label>
+          <Label htmlFor="login-password">{t("login.password")}</Label>
           <div className="relative">
             <Input
               id="login-password"
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
-              placeholder="Enter your password"
+              placeholder={t("login.passwordPlaceholder")}
               className="pr-14"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
@@ -130,7 +143,7 @@ export function LoginPage() {
               variant="ghost"
               size="icon-sm"
               className="absolute top-1.5 right-2"
-              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-label={showPassword ? t("password.hide") : t("password.show")}
               aria-pressed={showPassword}
               disabled={submitting}
               onClick={() => setShowPassword(!showPassword)}
@@ -148,22 +161,29 @@ export function LoginPage() {
               role="alert"
               className="text-sm text-destructive"
             >
-              {errors.password}
+              {t(errors.password)}
             </p>
           ) : null}
         </div>
         <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-          {submitting ? "Signing in…" : "Sign in"}
+          {submitting ? t("login.submitting") : t("action.signIn")}
           <RiArrowRightLine aria-hidden="true" />
         </Button>
       </form>
       <p className="mt-7 text-center text-sm text-muted-foreground">
-        No account?{" "}
+        {t("login.noAccount")}{" "}
         <Link
           to="/register"
           className="font-medium text-brand underline-offset-4 hover:underline"
         >
-          Create an account
+          {t("login.createAccount")}
+        </Link>
+        {" · "}
+        <Link
+          to="/join"
+          className="font-medium text-brand underline-offset-4 hover:underline"
+        >
+          {t("login.haveCode")}
         </Link>
       </p>
     </AuthLayout>

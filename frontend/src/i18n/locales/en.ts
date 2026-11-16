@@ -1,6 +1,3 @@
-// English is the source of truth. Every key added here must also be added to
-// rw.ts: rw.ts is typed against these keys, so a missing translation fails
-// `npm run build`. Use {name} placeholders for values inserted at runtime.
 export const en = {
   // App shell
   "app.title": "Itsinda Ryacu · Group savings",
@@ -43,6 +40,19 @@ export const en = {
   "login.submitting": "Signing in…",
   "login.noAccount": "No account?",
   "login.createAccount": "Create an account",
+  "login.haveCode": "Join with an invitation code",
+
+  // Join
+  "join.title": "Join your group",
+  "join.subtitle":
+    "Enter the code your group admin gave you and choose your sign-in details.",
+  "join.code": "Invitation code",
+  "join.submit": "Join group",
+  "join.startOwn": "Starting your own group? No code needed.",
+  "join.unavailable":
+    "Joining with a code is not connected yet, so nothing was sent. Ask your group admin to try again once it is ready.",
+  "validation.codeRequired": "Enter your invitation code.",
+  "login.sessionExpired": "Your session has ended. Sign in again to continue.",
 
   // Register
   "register.title": "Create an account",
@@ -102,8 +112,7 @@ export const en = {
   "validation.passwordShort": "Use at least 8 characters.",
   "validation.confirmRequired": "Confirm your password.",
   "validation.passwordMismatch": "Passwords do not match.",
-  "validation.groupNameShort":
-    "Enter your group name (at least 2 characters).",
+  "validation.groupNameShort": "Enter your group name (at least 2 characters).",
   "validation.savingsRequired": "Enter the monthly savings amount.",
   "validation.savingsInvalid": "Enter a valid amount in RWF.",
   "validation.meetingDayRequired": "Choose a meeting day.",
@@ -114,6 +123,7 @@ export const en = {
   // Messages returned by the backend (see src/i18n/api-messages.ts)
   "api.network": "Could not reach the server. Is it running?",
   "api.generic": "Something went wrong.",
+  "api.forbidden": "You are not allowed to do this.",
   "api.invalidCredentials": "Invalid email or password!",
   "api.inactive": "Your account or savings group is inactive!",
   "api.noCredentials":
@@ -126,12 +136,18 @@ export const en = {
 
   // Dashboard
   "dashboard.welcome": "Welcome back, {name}.",
-  "dashboard.totalSavings": "Your total savings",
+  "dashboard.totalSavings": "Group savings",
+  "dashboard.members": "Members",
+  "dashboard.membersDetail": "{active} active · {pending} pending",
+  "dashboard.monthlyContribution": "Collected this month",
+  "dashboard.goalProgress": "{percent}% of the {month} target",
+  "dashboard.monthlyTarget": "Expected from active members: {amount}",
+  "dashboard.emptyHint":
+    "Record the first contribution to see totals and activity here.",
+  "dashboard.contributionsCaption": "Most recent contributions",
+  "dashboard.colMember": "Member",
   "dashboard.thisMonth": "+ {amount} this month",
-  "dashboard.group": "Your group",
   "dashboard.membersAndLocation": "{count} members · {location}",
-  "dashboard.monthlyContribution": "Monthly contribution",
-  "dashboard.goalProgress": "{percent}% of your {month} goal",
   "dashboard.savingsHistory": "Savings history",
   "dashboard.lastSixMonths": "Last 6 months · RWF",
   "dashboard.chartSeries": "Total savings",
@@ -139,24 +155,22 @@ export const en = {
     "Savings increased from {from} in {fromMonth} to {to} in {toMonth}",
   "dashboard.goalEyebrow": "THIS MONTH’S GOAL",
   "dashboard.toGo": "{amount} to go.",
-  "dashboard.monthlyTarget": "Monthly target: {amount}",
   "dashboard.recentActivity": "Recent activity",
   "dashboard.noContributions": "No contributions yet",
-  "dashboard.contributionsFor": "Contributions for {name}",
-  "dashboard.colActivity": "Activity",
   "dashboard.colDate": "Date",
   "dashboard.colAmount": "Amount",
-  "dashboard.colStatus": "Status",
 
   // Navigation links for the management pages
-  "nav.savings": "My savings",
   "nav.groupPage": "Group",
+  "nav.savings": "Savings",
   "nav.members": "Members",
   "action.cancel": "Cancel",
 
   // Savings
-  "savings.title": "My savings",
+  "savings.title": "Savings",
   "savings.record": "Record contribution",
+  "savings.member": "Member",
+  "validation.memberRequired": "Choose who paid.",
   "savings.total": "Total savings",
   "savings.thisMonth": "This month",
   "savings.monthlyTarget": "Monthly target",
@@ -170,13 +184,18 @@ export const en = {
   "savings.colAmount": "Amount",
   "savings.colStatus": "Status",
   "savings.recorded": "Recorded",
-  "validation.amountInvalid":
-    "Enter an amount in whole RWF greater than zero.",
+  "validation.amountInvalid": "Enter an amount in whole RWF greater than zero.",
   "validation.dateInvalid": "Choose a valid date that is not in the future.",
   "validation.amountTooLarge": "This amount is too large.",
 
   // Group page
   "group.members": "Members",
+  "group.monthlySaving": "Monthly saving",
+  "group.details": "Group details",
+  "group.location": "Location",
+  "group.meetings": "Meetings",
+  "group.leaders": "Leaders",
+  "group.noLeaders": "No chairperson or treasurer yet",
   "group.membersTitle": "Group members",
   "group.manage": "Manage members",
   "group.noMembers": "No members yet",
@@ -207,13 +226,13 @@ export const en = {
   "members.details": "Member details",
   "members.joined": "Joined",
   "members.group": "Group",
+  "members.savingsPaid": "Savings paid",
+  "members.noSavings": "No contributions yet",
   "validation.memberInvalid": "Enter a name and a valid phone number.",
   "validation.memberDuplicate":
     "This phone number already belongs to a member.",
 
   // Sample data labels (only needed while the dashboard uses fixtures)
-  "fixture.monthlyContribution": "Monthly savings contribution",
-  "fixture.statusRecorded": "Recorded",
 } as const
 
 export type MessageKey = keyof typeof en
