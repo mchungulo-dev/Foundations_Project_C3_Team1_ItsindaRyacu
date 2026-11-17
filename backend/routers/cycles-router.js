@@ -5,24 +5,24 @@ const { protect, adminsOnly } = require('../middleware/auth');
 
 // POST /api/cycles -Create new cycle(admins)
 router.post('/', protect, adminsOnly, (req, res) => {
-    const { start_date, end_date, contribution_amount} = req.body;
+    const { start_date, end_date, contribution_amount, default_interest_rate} = req.body;
 
     if(!start_date || !contribution_amount){
         return res.status(400).json({ error: 'Start date and contribution amount are required'});
     }
     try{
         // check whether there are other active cycles
-        const activeCycle = db.prepare('SELECT cycle_id FROM cycles WHERE status = "active"').get();
+        const activeCycle = db.prepare(`SELECT cycle_id FROM cycles WHERE account_id = ? AND status = 'active'`).get(req.user.account_id);
         if(activeCycle){
             return res.status(400).json({ error: "A cycle is already active. Close the cycle first before creating a new one"});
         }
 
-        const insertCycle = db.prepare(`
-            INSERT INTO cycles (start_date, end_date, contribution_amount, status) VALUES(?,?,?,'active')`);
+        const results = db.prepare(`
+            INSERT INTO cycles (account_id, start_date, end_date, contribution_amount, default_interest_rate, status)
+            VALUES (?, ?, ?, ?, ?, 'active')
+        `).run(req.user.account_id, start_date, end_date, contribution_amount, default_interest_rate);
 
-            const results = insertCycle.run(start_date, end_date || null, contribution_amount);
-
-            res.status(201).json({ message: "Cycle created successfully", cycle_id: results.lastInsertRowid});
+        res.status(201).json({ message: "Cycle created successfully", cycle_id: results.lastInsertRowid});
 
     } catch (error) {
         console.error(error)

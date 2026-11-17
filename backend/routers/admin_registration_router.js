@@ -92,7 +92,7 @@ router.route('/register').post(async(req, res) => {
             db.prepare(`
                 INSERT INTO members (
                     account_id, member_name, email, phone,
-                    national_id_number, password_hash, role, is_active
+                    national_id_number, password, role, is_active
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             `).run(

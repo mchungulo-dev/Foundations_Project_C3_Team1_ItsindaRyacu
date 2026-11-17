@@ -13,7 +13,8 @@ const protect = (req, res, next) => {
             req.user = {
                 id: decodedToken.id,
                 role: decodedToken.role,
-                member_id: decodedToken.member_id
+                member_id: decodedToken.member_id,
+                account_id: decodedToken.account_id
             }
 
             next();

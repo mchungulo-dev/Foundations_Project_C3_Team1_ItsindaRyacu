@@ -89,7 +89,7 @@ router.route('/add-member').post(async (req, res) => {
         }
 
         // Register the new member under the admin's savings group
-        const addMember = db.prepare(`INSERT INTO members (account_id, member_name, email, phone, national_id_number, password_hash, role, is_active)
+        const addMember = db.prepare(`INSERT INTO members (account_id, member_name, email, phone, national_id_number, password, role, is_active)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         `).run(decodedToken.account_id, member_name, email, phone, national_id_number, hashedPassword, 'member', 1);
 

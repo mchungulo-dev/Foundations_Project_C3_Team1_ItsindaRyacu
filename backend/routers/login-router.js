@@ -27,7 +27,7 @@ router.route('/login').post(async (req, res) => {
                 m.member_name,
                 m.email,
                 m.role,
-                m.password_hash,
+                m.password AS password_hash,
                 m.is_active,
                 g.group_name,
                 g.is_active AS group_is_active

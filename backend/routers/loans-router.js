@@ -1,4 +1,3 @@
-
 const router = require('express').Router();
 const db = require('../config/database');
 const Joi = require('joi');
@@ -53,9 +52,7 @@ const getUserFromToken = (req, res, requiredRole) => {
         `).get(decodedToken.member_id, decodedToken.account_id);
 
         if (!activeUser) {
-            res.status(403).json({
-                message: 'Your account or savings group is inactive!'
-            });
+            res.status(403).json({message: 'Your account or savings group is inactive!'});
             return null;
         }
 
