@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from "@/lib/config"
-import { setAuthToken } from "@/lib/auth-token"
+import { getAuthToken, isTokenExpired, setAuthToken } from "@/lib/auth-token"
 import type { RegisteredAccount } from "@/lib/register-account"
 import { phoneForApi } from "@/lib/validation"
 
@@ -28,19 +28,33 @@ async function parseJson(response: Response): Promise<unknown> {
 }
 
 function messageFromBody(body: unknown): string {
-  if (body && typeof body === "object" && "message" in body) {
-    const message = (body as { message: unknown }).message
+  if (body && typeof body === "object") {
+    const { message, error } = body as { message?: unknown; error?: unknown }
     if (typeof message === "string") {
       return message
+    }
+    if (typeof error === "string") {
+      return error
     }
   }
   return "Something went wrong."
 }
 
-export async function apiPost<T>(
-  path: string,
-  json: unknown
-): Promise<T> {
+export function errorDetails(error: unknown): string[] {
+  if (
+    error instanceof ApiError &&
+    error.body &&
+    typeof error.body === "object"
+  ) {
+    const { errors } = error.body as { errors?: unknown }
+    if (Array.isArray(errors)) {
+      return errors.filter((item): item is string => typeof item === "string")
+    }
+  }
+  return []
+}
+
+export async function apiPost<T>(path: string, json: unknown): Promise<T> {
   const url = `${getApiBaseUrl()}${path}`
   const response = await fetch(url, {
     method: "POST",
@@ -55,6 +69,46 @@ export async function apiPost<T>(
   }
 
   return body as T
+}
+
+export const SESSION_EXPIRED_EVENT = "auth:session-expired"
+
+export async function apiRequest<T>(
+  path: string,
+  options: { method?: string; json?: unknown } = {}
+): Promise<T> {
+  const token = getAuthToken()
+  if (!token || isTokenExpired(token)) {
+    window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT))
+    throw new ApiError("Your session has ended.", 401, null)
+  }
+
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+  }
+  if (options.json !== undefined) {
+    headers["Content-Type"] = "application/json"
+  }
+
+  const response = await fetch(`${getApiBaseUrl()}${path}`, {
+    method: options.method ?? "GET",
+    headers,
+    body: options.json === undefined ? undefined : JSON.stringify(options.json),
+  })
+  const body = await parseJson(response)
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT))
+    }
+    throw new ApiError(messageFromBody(body), response.status, body)
+  }
+
+  return body as T
+}
+
+export function apiGet<T>(path: string): Promise<T> {
+  return apiRequest<T>(path)
 }
 
 export type LoginResponse = {

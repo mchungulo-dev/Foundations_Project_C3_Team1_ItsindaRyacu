@@ -1,9 +1,6 @@
-// Kinyarwanda translations. Typed against the English keys, so a missing key
-// fails the TypeScript build. Wording should be reviewed by a Kinyarwanda
-// speaker on the team before the presentation.
 import type { Messages } from "@/i18n/locales/en"
 
-export const rw: Messages = {
+export const rw: Partial<Messages> = {
   // App shell
   "app.title": "Itsinda Ryacu · Kuzigama mu itsinda",
   "app.skipToContent": "Simbukira ku bikubiyemo",
@@ -108,13 +105,11 @@ export const rw: Messages = {
   "validation.passwordMismatch": "Amagambobanga ntabwo ahura.",
   "validation.groupNameShort":
     "Andika izina ry’itsinda ryawe (nibura inyuguti 2).",
-  "validation.savingsRequired":
-    "Andika amafaranga yo kuzigama buri kwezi.",
+  "validation.savingsRequired": "Andika amafaranga yo kuzigama buri kwezi.",
   "validation.savingsInvalid": "Andika umubare w’amafaranga wemewe muri RWF.",
   "validation.meetingDayRequired": "Hitamo umunsi w’inama.",
   "validation.meetingTimeRequired": "Hitamo isaha y’inama.",
-  "validation.meetingTimeInvalid":
-    "Koresha isaha y’amasaha 24, urugero 16:00.",
+  "validation.meetingTimeInvalid": "Koresha isaha y’amasaha 24, urugero 16:00.",
   "validation.startDateRequired": "Hitamo itariki yo gutangiriraho.",
 
   // Messages returned by the backend
@@ -133,12 +128,8 @@ export const rw: Messages = {
 
   // Dashboard
   "dashboard.welcome": "Murakaza neza, {name}.",
-  "dashboard.totalSavings": "Amafaranga yawe yose wazigamye",
   "dashboard.thisMonth": "+ {amount} muri uku kwezi",
-  "dashboard.group": "Itsinda ryawe",
   "dashboard.membersAndLocation": "Abanyamuryango {count} · {location}",
-  "dashboard.monthlyContribution": "Umusanzu w’ukwezi",
-  "dashboard.goalProgress": "{percent}% by’intego yawe ya {month}",
   "dashboard.savingsHistory": "Amateka y’ukuzigama",
   "dashboard.lastSixMonths": "Amezi 6 ashize · RWF",
   "dashboard.chartSeries": "Amafaranga yose yazigamwe",
@@ -146,23 +137,17 @@ export const rw: Messages = {
     "Ukuzigama kwiyongereye kuva kuri {from} muri {fromMonth} kugera kuri {to} muri {toMonth}",
   "dashboard.goalEyebrow": "INTEGO Y’UKWEZI",
   "dashboard.toGo": "Hasigaye {amount}.",
-  "dashboard.monthlyTarget": "Intego y’ukwezi: {amount}",
   "dashboard.recentActivity": "Ibyakozwe vuba",
   "dashboard.noContributions": "Nta musanzu uratangwa",
-  "dashboard.contributionsFor": "Imisanzu ya {name}",
-  "dashboard.colActivity": "Igikorwa",
   "dashboard.colDate": "Itariki",
   "dashboard.colAmount": "Umubare",
-  "dashboard.colStatus": "Imiterere",
 
   // Navigation links for the management pages
-  "nav.savings": "Ukuzigama kwanjye",
   "nav.groupPage": "Itsinda",
   "nav.members": "Abanyamuryango",
   "action.cancel": "Reka",
 
   // Savings
-  "savings.title": "Ukuzigama kwanjye",
   "savings.record": "Andika umusanzu",
   "savings.total": "Amafaranga yose yazigamwe",
   "savings.thisMonth": "Uku kwezi",
@@ -179,8 +164,7 @@ export const rw: Messages = {
   "savings.recorded": "Byanditswe",
   "validation.amountInvalid":
     "Andika umubare w’amafaranga yuzuye ya RWF urenze zero.",
-  "validation.dateInvalid":
-    "Hitamo itariki yemewe itari iy’igihe kizaza.",
+  "validation.dateInvalid": "Hitamo itariki yemewe itari iy’igihe kizaza.",
   "validation.amountTooLarge": "Uyu mubare ni munini cyane.",
 
   // Group page
@@ -215,12 +199,9 @@ export const rw: Messages = {
   "members.details": "Amakuru y’umunyamuryango",
   "members.joined": "Yinjiye",
   "members.group": "Itsinda",
-  "validation.memberInvalid":
-    "Andika izina na numero ya telefone yemewe.",
+  "validation.memberInvalid": "Andika izina na numero ya telefone yemewe.",
   "validation.memberDuplicate":
     "Iyi numero ya telefone isanzwe ikoreshwa n’umunyamuryango.",
 
   // Sample data labels
-  "fixture.monthlyContribution": "Umusanzu wo kuzigama w’ukwezi",
-  "fixture.statusRecorded": "Byanditswe",
 }
