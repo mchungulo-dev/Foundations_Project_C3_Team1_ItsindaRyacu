@@ -1,21 +1,49 @@
-import { RiLayoutGridLine, RiLogoutBoxRLine } from "@remixicon/react"
+import {
+  RiGroupLine,
+  RiLayoutGridLine,
+  RiLogoutBoxRLine,
+  RiTeamLine,
+  RiWallet3Line,
+} from "@remixicon/react"
 import { NavLink, useNavigate } from "react-router-dom"
 import { Logo } from "@/components/logo"
 import { Button } from "@/components/ui/button"
 import { useSession } from "@/context/session-context"
 import { demoGroup, demoMember } from "@/data/demo-data"
+import { useI18n } from "@/i18n/i18n-context"
+import type { MessageKey } from "@/i18n/locales/en"
+import { useRoleLabel } from "@/i18n/use-role-label"
+import { canManageMembers } from "@/lib/permissions"
+
+const navigation: {
+  to: string
+  label: MessageKey
+  icon: typeof RiLayoutGridLine
+  adminOnly?: boolean
+}[] = [
+  { to: "/dashboard", label: "nav.overview", icon: RiLayoutGridLine },
+  { to: "/savings", label: "nav.savings", icon: RiWallet3Line },
+  { to: "/group", label: "nav.groupPage", icon: RiGroupLine },
+  { to: "/members", label: "nav.members", icon: RiTeamLine, adminOnly: true },
+]
 
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const navigate = useNavigate()
   const { session, clearSession } = useSession()
+  const { t } = useI18n()
+  const roleLabel = useRoleLabel()
 
+  const sessionRole = session ? roleLabel(session.user.role) : ""
   const groupTitle = session?.user.group_name ?? demoGroup.name
   const groupSubtitle = session
-    ? `${session.roleLabel} · ${session.user.email}`
-    : `${demoGroup.memberCount} members · ${demoGroup.location}`
+    ? `${sessionRole} · ${session.user.email}`
+    : t("dashboard.membersAndLocation", {
+        count: demoGroup.memberCount,
+        location: demoGroup.location,
+      })
 
   const memberName = session?.user.member_name ?? demoMember.name
-  const memberRole = session?.roleLabel ?? demoMember.role
+  const memberRole = session ? sessionRole : t("role.member")
   const memberInitials = session?.initials ?? demoMember.initials
 
   return (
@@ -25,22 +53,28 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
       <div className="mt-8 rounded-xl bg-white/10 p-4">
         <p className="text-sm font-medium">{groupTitle}</p>
-        <p className="mt-2 break-words text-xs text-white/70">{groupSubtitle}</p>
+        <p className="mt-2 text-xs break-words text-white/70">
+          {groupSubtitle}
+        </p>
       </div>
-      <nav aria-label="Main navigation" className="mt-8 flex-1">
-        <NavLink
-          to="/dashboard"
-          onClick={onNavigate}
-          className={({ isActive }) =>
-            `flex items-center gap-3 rounded-lg px-3 py-3 text-sm focus-visible:outline-2 focus-visible:outline-primary ${isActive ? "bg-white/10 text-white" : "text-white/75 hover:bg-white/5"}`
-          }
-        >
-          <RiLayoutGridLine
-            className="size-5 text-[#b2f52b]"
-            aria-hidden="true"
-          />
-          Overview
-        </NavLink>
+      <nav aria-label={t("nav.main")} className="mt-8 flex-1 space-y-2">
+        {navigation
+          .filter(
+            (item) => !item.adminOnly || canManageMembers(session?.user.role)
+          )
+          .map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              onClick={onNavigate}
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-lg px-3 py-3 text-sm focus-visible:outline-2 focus-visible:outline-primary ${isActive ? "bg-white/10 text-white" : "text-white/75 hover:bg-white/5"}`
+              }
+            >
+              <item.icon className="size-5 text-[#b2f52b]" aria-hidden="true" />
+              {t(item.label)}
+            </NavLink>
+          ))}
       </nav>
       <div className="mt-5 flex items-center gap-3 border-t border-white/15 pt-5">
         <span
@@ -59,7 +93,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
             variant="ghost"
             size="icon"
             className="shrink-0 text-white/80 hover:bg-white/10 hover:text-white"
-            aria-label="Log out"
+            aria-label={t("action.logOut")}
             onClick={() => {
               clearSession()
               onNavigate?.()
