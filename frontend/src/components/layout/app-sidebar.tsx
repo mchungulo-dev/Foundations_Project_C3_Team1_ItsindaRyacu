@@ -4,18 +4,26 @@ import { Logo } from "@/components/logo"
 import { Button } from "@/components/ui/button"
 import { useSession } from "@/context/session-context"
 import { demoGroup, demoMember } from "@/data/demo-data"
+import { useI18n } from "@/i18n/i18n-context"
+import { useRoleLabel } from "@/i18n/use-role-label"
 
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const navigate = useNavigate()
   const { session, clearSession } = useSession()
+  const { t } = useI18n()
+  const roleLabel = useRoleLabel()
 
+  const sessionRole = session ? roleLabel(session.user.role) : ""
   const groupTitle = session?.user.group_name ?? demoGroup.name
   const groupSubtitle = session
-    ? `${session.roleLabel} · ${session.user.email}`
-    : `${demoGroup.memberCount} members · ${demoGroup.location}`
+    ? `${sessionRole} · ${session.user.email}`
+    : t("dashboard.membersAndLocation", {
+        count: demoGroup.memberCount,
+        location: demoGroup.location,
+      })
 
   const memberName = session?.user.member_name ?? demoMember.name
-  const memberRole = session?.roleLabel ?? demoMember.role
+  const memberRole = session ? sessionRole : t("role.member")
   const memberInitials = session?.initials ?? demoMember.initials
 
   return (
@@ -27,7 +35,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
         <p className="text-sm font-medium">{groupTitle}</p>
         <p className="mt-2 break-words text-xs text-white/70">{groupSubtitle}</p>
       </div>
-      <nav aria-label="Main navigation" className="mt-8 flex-1">
+      <nav aria-label={t("nav.main")} className="mt-8 flex-1">
         <NavLink
           to="/dashboard"
           onClick={onNavigate}
@@ -39,7 +47,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
             className="size-5 text-[#b2f52b]"
             aria-hidden="true"
           />
-          Overview
+          {t("nav.overview")}
         </NavLink>
       </nav>
       <div className="mt-5 flex items-center gap-3 border-t border-white/15 pt-5">
@@ -59,7 +67,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
             variant="ghost"
             size="icon"
             className="shrink-0 text-white/80 hover:bg-white/10 hover:text-white"
-            aria-label="Log out"
+            aria-label={t("action.logOut")}
             onClick={() => {
               clearSession()
               onNavigate?.()
