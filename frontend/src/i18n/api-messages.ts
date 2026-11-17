@@ -17,6 +17,11 @@ const BACKEND_MESSAGES: Record<string, MessageKey> = {
   "A group with this admin email already exists!": "api.groupEmailExists",
   "Email, phone number or national ID already exists!": "api.duplicateIdentity",
   "Internal Server Error!": "api.server",
+  "Member not found!": "api.memberNotFound",
+  "Only admins can perform this action!": "api.forbidden",
+  "Only admins can add members!": "api.forbidden",
+  "Authentication token required!": "api.sessionEnded",
+  "Invalid or expired token!": "api.sessionEnded",
   "Savings group registered successfully!": "api.groupRegistered",
 }
 
