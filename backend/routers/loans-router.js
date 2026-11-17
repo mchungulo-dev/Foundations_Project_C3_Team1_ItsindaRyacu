@@ -16,6 +16,10 @@ const loanDecisionSchema = Joi.object({
     status: Joi.string().valid('approved', 'rejected').required()
 }).options({ abortEarly: false });
 
+// Loan repayment validation
+const repaymentSchema = Joi.object({
+    amount_repaid: Joi.number().integer().positive().max(Number.MAX_SAFE_INTEGER).required()
+});
 
 // Verify JWT and user role
 const getUserFromToken = (req, res, requiredRole) => {
@@ -291,4 +295,119 @@ router.route('/applications/:id/decision').put((req, res) => {
     }
 });
 
+// ADMIN: Confirm that an approved loan was issued
+router.post('/:id/disburse', (req, res) => {
+    try {
+        const admin = getUserFromToken(req, res, 'admin');
+        if (!admin) return;
+
+        const loanId = Number(req.params.id);
+
+        if (!Number.isSafeInteger(loanId) || loanId <= 0) {
+            return res.status(400).json({ message: 'Invalid loan ID!' });
+        }
+
+        const result = db.prepare(`
+            UPDATE loans
+            SET status = 'disbursed', issue_date = CURRENT_DATE
+            WHERE loan_id = ?
+              AND status = 'approved'
+              AND cycle_id IN (
+                  SELECT cycle_id FROM cycles WHERE account_id = ?
+              )
+        `).run(loanId, admin.account_id);
+
+        if (!result.changes) {
+            return res.status(409).json({message: 'No approved loan found in your group to disburse.'});
+        }
+
+        return res.json({ message: 'Loan disbursement recorded!' });
+    } catch (error) {
+        console.error('Disbursement Error:', error);
+        return res.status(500).json({ message: 'Internal Server Error!' });
+    }
+});
+
+// ADMIN: Record money received as a loan repayment
+router.post('/:id/repayments', (req, res) => {
+    try {
+        const admin = getUserFromToken(req, res, 'admin');
+        if (!admin) return;
+
+        const loanId = Number(req.params.id);
+        const { error, value } = repaymentSchema.validate(req.body);
+
+        if (!Number.isSafeInteger(loanId) || loanId <= 0 || error) {
+            return res.status(400).json({message: 'Provide a valid loan ID and positive whole-RWF amount.'});
+        }
+
+        const recordPayment = db.transaction(() => {
+            const loan = db.prepare(`
+                SELECT l.*
+                FROM loans AS l
+                JOIN cycles AS c ON c.cycle_id = l.cycle_id
+                WHERE l.loan_id = ? AND c.account_id = ?
+            `).get(loanId, admin.account_id);
+
+            if (!loan) {
+                return { code: 404, message: 'Loan not found!' };
+            }
+
+            if (loan.status !== 'disbursed') {
+                return {code: 409, message: 'Repayments require a disbursed loan.'};
+            }
+
+            const { total_paid } = db.prepare(`
+                SELECT COALESCE(SUM(amount_repaid), 0) AS total_paid
+                FROM repayments
+                WHERE loan_id = ? AND status = 'verified'
+            `).get(loanId);
+
+            const totalDue = Math.round(loan.principal_amount * (1 + loan.interest_rate / 100));
+
+            if (
+                !Number.isSafeInteger(totalDue) || totalDue <= 0 ||
+                !Number.isSafeInteger(total_paid) ||
+                total_paid < 0 || total_paid > totalDue
+            ) {
+                throw new Error('Invalid stored loan or repayment amounts');
+            }
+
+            const balance = totalDue - total_paid;
+
+            if (value.amount_repaid > balance) {
+                return {code: 400, message: 'Payment exceeds the remaining balance!', remaining_balance: balance};
+            }
+
+            const payment = db.prepare(`
+                INSERT INTO repayments (
+                    loan_id, amount_repaid, payment_date,
+                    status, recorded_by
+                )
+                VALUES (?, ?, CURRENT_DATE, 'verified', ?)
+            `).run(loanId, value.amount_repaid, admin.member_id);
+
+            const remainingBalance = balance - value.amount_repaid;
+
+            if (remainingBalance === 0) {
+                db.prepare(`UPDATE loans SET status = 'closed' WHERE loan_id = ?`).run(loanId);
+            }
+
+            return {
+                code: 201,
+                message: 'Repayment recorded successfully!',
+                repayment_id: payment.lastInsertRowid,
+                amount_repaid: value.amount_repaid,
+                remaining_balance: remainingBalance,
+                loan_status: remainingBalance === 0 ? 'closed' : 'disbursed'
+            };
+        });
+
+        const { code, ...response } = recordPayment.immediate();
+        return res.status(code).json(response);
+    } catch (error) {
+        console.error('Repayment Error:', error);
+        return res.status(500).json({ message: 'Internal Server Error!' });
+    }
+});
 module.exports = router;
