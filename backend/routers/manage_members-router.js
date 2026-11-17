@@ -212,14 +212,25 @@ router.route('/update-member/:id').put((req, res) => {
             }
         }
 
-        // This is to dynamically construct the UPDATE query
-        const fields = Object.keys(value);
+        // Allow the update to reflect fields provided by the admin
+        const { member_name, email, phone, national_id_number } = value;
 
-        const updates = fields.map(field => `${field} = ?`).join(', ');
-
-        const values = fields.map(field => value[field]);
-
-        db.prepare(`UPDATE members SET ${updates} WHERE member_id = ? AND account_id = ?`).run(...values, req.params.id, decodedToken.account_id);
+        db.prepare(`
+            UPDATE members
+            SET
+                member_name = COALESCE(?, member_name),
+                email = COALESCE(?, email),
+                phone = COALESCE(?, phone),
+                national_id_number = COALESCE(?, national_id_number)
+            WHERE member_id = ? AND account_id = ?
+        `).run(
+            member_name ?? null,
+            email ?? null,
+            phone ?? null,
+            national_id_number ?? null,
+            req.params.id,
+            decodedToken.account_id
+        );
 
         return res.status(200).json({message: 'Member updated successfully!'});
 
