@@ -12,7 +12,6 @@ import { AppLayout } from "@/layouts/app-layout"
 import { LoginPage } from "@/pages/auth/login"
 import { RegisterPage } from "@/pages/auth/register"
 import { CreateGroupPage } from "@/pages/auth/create-group"
-import { JoinPage } from "@/pages/auth/join"
 import { DashboardPage } from "@/pages/dashboard"
 import { DesignSystemPage } from "@/pages/design-system"
 import { GroupPage } from "@/pages/group"
@@ -47,9 +46,8 @@ function NotFoundPage() {
 
 export function App() {
   const { t } = useI18n()
-  // One list shared by the member pages, so a new member shows in both the list
-  // and the group page. It resets on reload until the backend has endpoints.
-  const [members, setMembers] = useState(initialMembers)
+  // The savings and dashboard pages keep sample contributions until the backend
+  // savings endpoints work. They reset on reload.
   const [contributions, setContributions] = useState(initialContributions)
 
   return (
@@ -65,7 +63,6 @@ export function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/register/create-group" element={<CreateGroupPage />} />
-        <Route path="/join" element={<JoinPage />} />
         <Route
           element={
             <ProtectedRoute>
@@ -78,14 +75,17 @@ export function App() {
           <Route
             path="/dashboard"
             element={
-              <DashboardPage members={members} contributions={contributions} />
+              <DashboardPage
+                members={initialMembers}
+                contributions={contributions}
+              />
             }
           />
           <Route
             path="/savings"
             element={
               <SavingsPage
-                members={members}
+                members={initialMembers}
                 contributions={contributions}
                 onAddContribution={(contribution) =>
                   setContributions((previous) => [...previous, contribution])
@@ -93,33 +93,9 @@ export function App() {
               />
             }
           />
-          <Route
-            path="/group"
-            element={
-              <GroupPage members={members} contributions={contributions} />
-            }
-          />
-          <Route
-            path="/members"
-            element={
-              <MembersPage
-                members={members}
-                contributions={contributions}
-                onAddMember={(member) =>
-                  setMembers((previous) => [...previous, member])
-                }
-              />
-            }
-          />
-          <Route
-            path="/members/:memberId"
-            element={
-              <MemberDetailsPage
-                members={members}
-                contributions={contributions}
-              />
-            }
-          />
+          <Route path="/group" element={<GroupPage />} />
+          <Route path="/members" element={<MembersPage />} />
+          <Route path="/members/:memberId" element={<MemberDetailsPage />} />
         </Route>
         <Route
           path="/design-system"

@@ -178,13 +178,6 @@ export function LoginPage() {
         >
           {t("login.createAccount")}
         </Link>
-        {" · "}
-        <Link
-          to="/join"
-          className="font-medium text-brand underline-offset-4 hover:underline"
-        >
-          {t("login.haveCode")}
-        </Link>
       </p>
     </AuthLayout>
   )
