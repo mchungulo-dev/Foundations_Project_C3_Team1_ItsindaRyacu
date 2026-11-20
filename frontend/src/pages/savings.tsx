@@ -12,33 +12,56 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { SampleNotice } from "@/components/request-states"
 import { useSession } from "@/context/session-context"
-import { demoGroup, initialContributions } from "@/data/demo-data"
+import {
+  expectedPerMonth,
+  monthTotal,
+  sortByNewest,
+  totalOf,
+  type Contribution,
+  type Member,
+} from "@/data/demo-data"
 import { useI18n } from "@/i18n/i18n-context"
 import type { MessageKey } from "@/i18n/locales/en"
 import { formatDate, formatMoney, getToday } from "@/lib/format"
+import { canRecordContributions } from "@/lib/permissions"
 import { isValidAmount, isValidDate } from "@/lib/validation"
 
-// The backend has no savings endpoint yet. Contributions live in this page's
-// state, so they reset when you leave the page or reload.
-export function SavingsPage() {
+const SELECT_CLASS =
+  "h-12 w-full rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-ring"
+
+type SavingsPageProps = {
+  members: Member[]
+  contributions: Contribution[]
+  onAddContribution: (contribution: Contribution) => void
+}
+
+export function SavingsPage({
+  members,
+  contributions,
+  onAddContribution,
+}: SavingsPageProps) {
   const { session } = useSession()
   const { t, locale } = useI18n()
-  const [contributions, setContributions] = useState(initialContributions)
   const [showForm, setShowForm] = useState(false)
+  const [memberId, setMemberId] = useState(members[0]?.id ?? "")
   const [amount, setAmount] = useState("")
   const [date, setDate] = useState(getToday)
   const [error, setError] = useState<MessageKey | "">("")
   const [added, setAdded] = useState(false)
   const today = getToday()
   const money = (value: number) => formatMoney(value, locale)
-  const total = contributions.reduce((sum, item) => sum + item.amount, 0)
-  const monthlyTotal = contributions
-    .filter((item) => item.date.startsWith(today.slice(0, 7)))
-    .reduce((sum, item) => sum + item.amount, 0)
+  const total = totalOf(contributions)
+  const canRecord = canRecordContributions(session?.user.role)
+  const memberNames = new Map(members.map((m) => [m.id, m.name]))
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (!memberNames.has(memberId)) {
+      setError("validation.memberRequired")
+      return
+    }
     if (!isValidAmount(amount)) {
       setError("validation.amountInvalid")
       return
@@ -51,12 +74,12 @@ export function SavingsPage() {
       setError("validation.amountTooLarge")
       return
     }
-    setContributions((previous) =>
-      [
-        { id: crypto.randomUUID(), amount: Number(amount), date },
-        ...previous,
-      ].sort((a, b) => b.date.localeCompare(a.date))
-    )
+    onAddContribution({
+      id: crypto.randomUUID(),
+      memberId,
+      amount: Number(amount),
+      date,
+    })
     setAmount("")
     setDate(today)
     setError("")
@@ -66,27 +89,30 @@ export function SavingsPage() {
 
   return (
     <div className="space-y-6">
+      <SampleNotice />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">
             {t("savings.title")}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {session?.user.group_name ?? demoGroup.name}
+            {session?.user.group_name}
           </p>
         </div>
-        <Button
-          onClick={() => {
-            setShowForm(!showForm)
-            setError("")
-            setAdded(false)
-          }}
-          aria-expanded={showForm}
-          aria-controls="contribution-form"
-        >
-          <RiAddLine aria-hidden="true" />
-          {t("savings.record")}
-        </Button>
+        {canRecord ? (
+          <Button
+            onClick={() => {
+              setShowForm(!showForm)
+              setError("")
+              setAdded(false)
+            }}
+            aria-expanded={showForm}
+            aria-controls="contribution-form"
+          >
+            <RiAddLine aria-hidden="true" />
+            {t("savings.record")}
+          </Button>
+        ) : null}
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="border-0 bg-[#006b4f] text-white">
@@ -100,7 +126,9 @@ export function SavingsPage() {
             <p className="text-sm text-muted-foreground">
               {t("savings.thisMonth")}
             </p>
-            <p className="mt-4 text-2xl font-semibold">{money(monthlyTotal)}</p>
+            <p className="mt-4 text-2xl font-semibold">
+              {money(monthTotal(contributions, today))}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -109,7 +137,7 @@ export function SavingsPage() {
               {t("savings.monthlyTarget")}
             </p>
             <p className="mt-4 text-2xl font-semibold">
-              {money(demoGroup.monthlyTarget)}
+              {money(expectedPerMonth(members))}
             </p>
           </CardContent>
         </Card>
@@ -119,7 +147,7 @@ export function SavingsPage() {
           {t("savings.added")}
         </p>
       ) : null}
-      {showForm ? (
+      {canRecord && showForm ? (
         <Card>
           <CardContent>
             <h2 className="mb-5 font-medium">{t("savings.record")}</h2>
@@ -129,7 +157,24 @@ export function SavingsPage() {
               noValidate
               className="space-y-5"
             >
-              <div className="grid gap-5 sm:grid-cols-2">
+              <div className="grid gap-5 sm:grid-cols-3">
+                <div className="space-y-2">
+                  <Label htmlFor="contribution-member">
+                    {t("savings.member")}
+                  </Label>
+                  <select
+                    id="contribution-member"
+                    value={memberId}
+                    onChange={(event) => setMemberId(event.target.value)}
+                    className={SELECT_CLASS}
+                  >
+                    {members.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="contribution-amount">
                     {t("savings.amount")}
@@ -188,14 +233,18 @@ export function SavingsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead scope="col">{t("savings.colDate")}</TableHead>
+                  <TableHead scope="col">{t("savings.member")}</TableHead>
                   <TableHead scope="col">{t("savings.colAmount")}</TableHead>
                   <TableHead scope="col">{t("savings.colStatus")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {contributions.map((item) => (
+                {sortByNewest(contributions).map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>{formatDate(item.date, locale)}</TableCell>
+                    <TableCell>
+                      {memberNames.get(item.memberId) ?? ""}
+                    </TableCell>
                     <TableCell className="font-medium text-brand">
                       {money(item.amount)}
                     </TableCell>
