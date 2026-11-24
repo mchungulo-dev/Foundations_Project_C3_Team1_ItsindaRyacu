@@ -42,5 +42,13 @@ const adminsOrTreasurer = (req, res, next) => {
     else{
         return res.status(403).json({ error: 'Access Denied. Admins and Treasurer only'});
     }
-}
-module.exports = { protect, adminsOnly, adminsOrTreasurer };
+};
+const adminOrChairperson = (req, res, next) => {
+    if(req.user && req.user.role === 'admin' || req.user.role === 'chairperson')
+        next();
+    else{
+        return res.status(403).json({ error: 'Access Denied. Admins and Chairperson only'});
+    }
+};
+
+module.exports = { protect, adminsOnly, adminsOrTreasurer, adminOrChairperson };

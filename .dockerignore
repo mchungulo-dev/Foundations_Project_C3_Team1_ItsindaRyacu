@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+!**/.env.example
+.git
+database
+*.db
+*.db-*
+**/*.log

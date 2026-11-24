@@ -4,6 +4,7 @@ const express = require('express')
 const cors = require('cors')
 const db = require('./config/database')
 const app = express()
+const invitationService = require('./utils/invitationService.js');
 
 // Use express middleware
 app.use(
@@ -24,6 +25,7 @@ const cyclesRouter = require('./routers/cycles-router');
 const sharesOutRouter = require('./routers/share-out-router');
 const meetingsRouter = require('./routers/meetingsRoutes');
 const loansRouter = require('./routers/loans-router');
+const invitationRouter = require('./routers/invitation-router.js');
 
 app.use('/auth/admin', adminRegistrationRouter);
 app.use('/auth/', loginRouter);
@@ -33,6 +35,7 @@ app.use('/cycles', cyclesRouter);
 app.use('/share-out', sharesOutRouter);
 app.use('/api/meetings', meetingsRouter);
 app.use('/loans', loansRouter);
+app.use('/invitation', invitationRouter);
 
 // Check whether the DB is running.
 app.get('/api/test-db', (req, res) => {
@@ -48,6 +51,30 @@ app.get('/api/test-db', (req, res) => {
     });
 });
 console.log('JWT Secret loaded:', !!process.env.JWT_SECRET);
+
+// Schedule daily cleanup of expired and unused invitation tokens
+const scheduleCleanUp = () => {
+    const now = new Date();
+    const nightTime = new Date(
+        now.getFullYear(), now.getMonth(), now.getDate() +1,0,0,0
+    );
+    const milliSecondsToMidnight = nightTime.getTime() - now.getTime();
+
+    setInterval(async () => {
+        try{
+            const results = await invitationService.deleteExpiredInvites();
+            console.log(`System cleanup executed. Cleaned up ${results.CleanedUpRecords}`);
+        } catch (err) {
+            console.error('Clean up failed: ', err);
+        }
+        setInterval(async () => {
+            await invitationService.deleteExpiredInvites();
+        }, 24 * 60 * 60 * 1000);
+    }, milliSecondsToMidnight);
+};
+
+scheduleCleanUp();
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
