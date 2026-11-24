@@ -21,7 +21,6 @@ export function normalizePhoneDigits(phone: string) {
   return phone.replace(/[\s-]/g, "")
 }
 
-/** Format for backend: Joi /^[0-9+]{10,15}$/ — use +250… for Rwanda mobiles */
 export function phoneForApi(phone: string): string {
   const digits = normalizePhoneDigits(phone)
   if (digits.startsWith("+250")) {
@@ -55,6 +54,26 @@ export function isValidAmount(value: string) {
     Number.isSafeInteger(Number(value)) &&
     Number(value) > 0
   )
+}
+
+export function isEndAfterStart(start: string, end: string) {
+  return isValidDate(start) && isValidDate(end) && end > start
+}
+
+// A percentage from 0 to 100, decimals allowed
+export function isValidRate(value: string) {
+  return /^\d+(\.\d+)?$/.test(value) && Number(value) <= 100
+}
+
+// Empty means none; otherwise whole RWF, zero allowed
+export function isValidFine(value: string) {
+  return (
+    value === "" || (/^\d+$/.test(value) && Number.isSafeInteger(Number(value)))
+  )
+}
+
+export function hasErrors(errors: Record<string, string>) {
+  return Object.values(errors).some(Boolean)
 }
 
 // A real calendar date written as YYYY-MM-DD
