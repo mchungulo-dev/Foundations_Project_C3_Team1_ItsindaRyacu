@@ -410,4 +410,65 @@ router.post('/:id/repayments', (req, res) => {
         return res.status(500).json({ message: 'Internal Server Error!' });
     }
 });
+
+// MEMBER: View personal loans and repayments
+router.get('/my-loans', (req, res) => {
+    try {
+        const member = getUserFromToken(req, res, 'member');
+        if (!member) return;
+
+        const loans = db.prepare(`
+            SELECT l.*
+            FROM loans AS l
+            JOIN cycles AS c ON c.cycle_id = l.cycle_id
+            WHERE l.member_id = ? AND c.account_id = ?
+            ORDER BY l.created_at DESC, l.loan_id DESC
+        `).all(member.member_id, member.account_id);
+
+        const getRepayments = db.prepare(`
+            SELECT repayment_id, amount_repaid, payment_date, status
+            FROM repayments
+            WHERE loan_id = ?
+            ORDER BY payment_date DESC, repayment_id DESC
+        `);
+
+        const results = loans.map(loan => {
+            const repayments = getRepayments.all(loan.loan_id);
+
+            const amountPaid = repayments
+                .filter(payment => payment.status === 'verified')
+                .reduce((sum, payment) => sum + payment.amount_repaid, 0);
+
+            // one-time flat-interest calculation as repayment recording.
+            const totalRepayable = Math.round(
+                loan.principal_amount * (1 + loan.interest_rate / 100)
+            );
+
+            const issued = ['disbursed', 'closed'].includes(loan.status);
+
+            return {
+                loan_id: loan.loan_id,
+                cycle_id: loan.cycle_id,
+                principal_amount: loan.principal_amount,
+                interest_rate: loan.interest_rate,
+                total_repayable: totalRepayable,
+                amount_paid: amountPaid,
+                remaining_balance: issued
+                    ? totalRepayable - amountPaid
+                    : null,
+                status: loan.status,
+                issue_date: loan.issue_date,
+                due_date: loan.due_date,
+                repayments
+            };
+        });
+
+        return res.json({message: 'Your loans retrieved successfully!', total_loans: results.length, loans: results});
+    
+    } catch (error) {
+        console.error('Member Loans Error:', error);
+        return res.status(500).json({message: 'Internal Server Error!'});
+    }
+});
+
 module.exports = router;
