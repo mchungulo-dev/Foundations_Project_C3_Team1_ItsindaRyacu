@@ -3,7 +3,6 @@ import type { MessageKey } from "@/i18n/locales/en"
 
 export type Locale = "en" | "rw"
 
-// Each language is always shown in its own name, so these are not translated.
 export const LOCALES: { code: Locale; label: string }[] = [
   { code: "en", label: "English" },
   { code: "rw", label: "Kinyarwanda" },
