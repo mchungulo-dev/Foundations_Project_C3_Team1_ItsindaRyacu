@@ -25,30 +25,10 @@ import {
   type AdminRegisterResponse,
 } from "@/lib/api"
 import { isRegisteredAccount } from "@/lib/register-account"
+import { DAY_KEYS, MEETING_DAYS } from "@/lib/meeting-days"
 import { isValidMeetingTime } from "@/lib/validation"
 
 const STEP_KEYS = ["createGroup.stepDetails", "createGroup.stepMeetings"] as const
-// These English values are what the API receives. Only the labels are translated.
-const MEETING_DAYS = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-] as const
-
-const DAY_KEYS: Record<(typeof MEETING_DAYS)[number], MessageKey> = {
-  Monday: "day.monday",
-  Tuesday: "day.tuesday",
-  Wednesday: "day.wednesday",
-  Thursday: "day.thursday",
-  Friday: "day.friday",
-  Saturday: "day.saturday",
-  Sunday: "day.sunday",
-}
-
 type GroupFormData = {
   groupName: string
   location: string
