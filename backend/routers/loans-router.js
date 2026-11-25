@@ -2,6 +2,7 @@ const router = require('express').Router();
 const db = require('../config/database');
 const Joi = require('joi');
 const jwt = require('jsonwebtoken');
+const {calculateLoanBalance} = require('../utils/loan_calculations');
 
 // Loan application validation
 const loanApplicationSchema = Joi.object({
@@ -363,7 +364,8 @@ router.post('/:id/repayments', (req, res) => {
                 WHERE loan_id = ? AND status = 'verified'
             `).get(loanId);
 
-            const totalDue = Math.round(loan.principal_amount * (1 + loan.interest_rate / 100));
+            // const totalDue = Math.round(loan.principal_amount * (1 + loan.interest_rate / 100));
+            const {totalRepayable: totalDue, remainingBalance: balance} = calculateLoanBalance (loan.principal_amount, loan.interest_rate, total_paid);
 
             if (
                 !Number.isSafeInteger(totalDue) || totalDue <= 0 ||
@@ -373,7 +375,7 @@ router.post('/:id/repayments', (req, res) => {
                 throw new Error('Invalid stored loan or repayment amounts');
             }
 
-            const balance = totalDue - total_paid;
+            // const balance = totalDue - total_paid;
 
             if (value.amount_repaid > balance) {
                 return {code: 400, message: 'Payment exceeds the remaining balance!', remaining_balance: balance};
