@@ -37,14 +37,14 @@ const adminsOnly = (req, res, next) => {
 };
 
 const adminsOrTreasurer = (req, res, next) => {
-    if(req.user && req.user.role === 'admin' || res.user.role === 'treasurer')
+    if(req.user && (req.user.role === 'admin' || req.user.role === 'treasurer'))
         next();
     else{
         return res.status(403).json({ error: 'Access Denied. Admins and Treasurer only'});
     }
 };
 const adminOrChairperson = (req, res, next) => {
-    if(req.user && req.user.role === 'admin' || req.user.role === 'chairperson')
+    if(req.user && (req.user.role === 'admin' || req.user.role === 'chairperson'))
         next();
     else{
         return res.status(403).json({ error: 'Access Denied. Admins and Chairperson only'});

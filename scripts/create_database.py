@@ -28,7 +28,7 @@ TABLES_SQL = """
     CREATE TABLE IF NOT EXISTS permissions(
         permission_id INTEGER PRIMARY KEY AUTOINCREMENT,
         role TEXT NOT NULL CHECK (role IN('admin', 'chairperson', 'treasurer', 'secretary', 'member')) DEFAULT 'member',
-        resource TEXT NOT NULL CHECK (resource IN('group_account', 'members', 'invitations', 'meetings', 'meeting_attendance', 'fines', 'shares_out', 'loans', 'savings', 'cycles', 'repayments')),
+        resource TEXT NOT NULL CHECK (resource IN('group_account', 'members', 'invitations', 'meetings', 'meeting_attendance', 'fines', 'share_outs', 'loans', 'savings', 'cycles', 'repayments')),
         action TEXT NOT NULL CHECK (action IN('create', 'read', 'update', 'delete')),
         is_allowed BOOLEAN NOT NULL DEFAULT FALSE,
         UNIQUE (role, resource, action)
@@ -94,6 +94,7 @@ TABLES_SQL = """
     CREATE TABLE IF NOT EXISTS fines(
         fine_id INTEGER PRIMARY KEY AUTOINCREMENT,
         account_id INTEGER NOT NULL,
+        cycle_id INTEGER NOT NULL,
         meeting_id INTEGER,
         member_id INTEGER NOT NULL,
         fine_amount NUMERIC NOT NULL,
@@ -103,6 +104,7 @@ TABLES_SQL = """
         recorded_by INTEGER NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (account_id) REFERENCES group_account(account_id) ON DELETE CASCADE,
+        FOREIGN KEY (cycle_id) REFERENCES cycles(cycle_id) ON DELETE CASCADE,
         FOREIGN KEY (meeting_id) REFERENCES meetings(meeting_id) ON DELETE SET NULL,
         FOREIGN KEY (member_id) REFERENCES members(member_id) ON DELETE CASCADE,
         FOREIGN KEY (recorded_by) REFERENCES members(member_id)
@@ -112,7 +114,7 @@ TABLES_SQL = """
         cycle_id INTEGER PRIMARY KEY AUTOINCREMENT,
         account_id INTEGER NOT NULL,
         start_date DATE NOT NULL,
-        end_date DATE NOT NULL,
+        end_date DATE,
         contribution_amount NUMERIC NOT NULL,
         default_interest_rate NUMERIC NOT NULL,
         reserve_percentage NUMERIC,
