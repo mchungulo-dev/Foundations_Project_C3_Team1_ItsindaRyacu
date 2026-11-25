@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react"
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react"
 import {
   I18nContext,
   LOCALES,
@@ -12,7 +18,7 @@ import { rw } from "@/i18n/locales/rw"
 const STORAGE_KEY = "app_locale"
 const DEFAULT_LOCALE: Locale = "en"
 
-const messages: Record<Locale, Partial<Messages>> = { en, rw }
+const messages: Record<Locale, Messages> = { en, rw }
 
 function isLocale(value: unknown): value is Locale {
   return LOCALES.some((locale) => locale.code === value)

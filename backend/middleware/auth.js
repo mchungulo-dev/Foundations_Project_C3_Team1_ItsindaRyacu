@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 require ('dotenv').config();
+const { can } = require('../utils/permissions');
 
 const protect = (req, res, next) => {
     let token;
@@ -37,18 +38,28 @@ const adminsOnly = (req, res, next) => {
 };
 
 const adminsOrTreasurer = (req, res, next) => {
-    if(req.user && req.user.role === 'admin' || res.user.role === 'treasurer')
+    if(req.user && (req.user.role === 'admin' || req.user.role === 'treasurer'))
+
         next();
     else{
         return res.status(403).json({ error: 'Access Denied. Admins and Treasurer only'});
     }
 };
 const adminOrChairperson = (req, res, next) => {
-    if(req.user && req.user.role === 'admin' || req.user.role === 'chairperson')
+    if(req.user && (req.user.role === 'admin' || req.user.role === 'chairperson'))
         next();
     else{
         return res.status(403).json({ error: 'Access Denied. Admins and Chairperson only'});
     }
 };
 
-module.exports = { protect, adminsOnly, adminsOrTreasurer, adminOrChairperson };
+// Allow only roles that may perform `action` (see utils/permissions.js),
+// e.g. router.post('/', protect, allow('manageMeetings'), handler)
+const allow = (action) => (req, res, next) => {
+    if (req.user && can(action, req.user.role)) {
+        return next();
+    }
+    return res.status(403).json({ error: 'Access denied. Your role cannot do this.' });
+};
+
+module.exports = { protect, allow, adminsOnly, adminsOrTreasurer, adminOrChairperson };

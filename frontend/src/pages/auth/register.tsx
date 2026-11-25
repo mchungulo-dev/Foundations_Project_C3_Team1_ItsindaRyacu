@@ -1,11 +1,5 @@
 import { useState, type FormEvent } from "react"
-import {
-  RiArrowRightLine,
-  RiCheckLine,
-  RiEyeLine,
-  RiEyeOffLine,
-  RiTeamLine,
-} from "@remixicon/react"
+import { RiArrowRightLine, RiEyeLine, RiEyeOffLine } from "@remixicon/react"
 import { Link, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -49,7 +43,6 @@ export function RegisterPage() {
     password: "",
     confirmPassword: "",
   })
-  const [account, setAccount] = useState<RegisteredAccount | null>(null)
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -74,55 +67,14 @@ export function RegisterPage() {
       return
     }
 
-    setAccount({
+    const account: RegisteredAccount = {
       name: name.trim(),
       email: email.trim(),
       phone: phone.trim(),
       password,
       nationalId,
-    })
-  }
-
-  if (account) {
-    return (
-      <AuthLayout>
-        <div
-          role="status"
-          className="flex gap-3 rounded-xl border border-border bg-secondary p-4 text-sm leading-relaxed text-secondary-foreground"
-        >
-          <RiCheckLine className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
-          <div className="space-y-1">
-            <p className="font-medium text-foreground">
-              {t("register.successTitle")}
-            </p>
-            <p>{t("register.successBody")}</p>
-          </div>
-        </div>
-
-        <div className="mt-8 space-y-3">
-          <Button
-            size="lg"
-            className="w-full"
-            onClick={() =>
-              navigate("/register/create-group", { state: { account } })
-            }
-          >
-            <RiTeamLine aria-hidden="true" />
-            {t("register.createGroup")}
-            <RiArrowRightLine aria-hidden="true" />
-          </Button>
-          <Button
-            render={<Link to="/login" />}
-            nativeButton={false}
-            variant="outline"
-            size="lg"
-            className="w-full"
-          >
-            {t("register.skip")}
-          </Button>
-        </div>
-      </AuthLayout>
-    )
+    }
+    navigate("/register/create-group", { state: { account } })
   }
 
   return (

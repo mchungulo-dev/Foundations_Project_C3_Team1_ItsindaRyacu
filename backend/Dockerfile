@@ -1,14 +1,6 @@
-# Build context = REPO ROOT (needs ../scripts for the DB bootstrap).
-# In Dokploy: Build Type = Dockerfile, Docker File = backend/Dockerfile, Docker Context Path = .
-#
-# Layout inside the image:
-#   /app/backend    -> Express app (server.js)
-#   /app/scripts    -> create_database.py
-#   /app/database   -> SQLite file (mount a persistent volume here)
-FROM node:20-bookworm-slim
+FROM node:24-bookworm-slim
 
 # python3: runs scripts/create_database.py on first start
-# build tools: fallback if a native module (bcrypt / better-sqlite3) has no prebuilt binary
 RUN apt-get update \
     && apt-get install -y --no-install-recommends python3 make g++ \
     && rm -rf /var/lib/apt/lists/*

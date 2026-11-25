@@ -1,8 +1,4 @@
-# Build context = ./frontend
-# In Dokploy: Build Type = Dockerfile, Build Path = /frontend
-# VITE_API_URL is baked in at BUILD time -> set it as a Build Arg in Dokploy
-# (Environment tab -> "Build-time Arguments"), e.g. VITE_API_URL=https://api.example.com
-FROM node:20-bookworm-slim AS build
+FROM node:24-bookworm-slim AS build
 WORKDIR /app
 
 COPY package*.json ./

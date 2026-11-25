@@ -70,7 +70,7 @@
     --secondary: #eaf2e9;
     --secondary-foreground: #173f35;
     --muted: #eaf2e9;
-    --muted-foreground: #62796e;
+    --muted-foreground: #556b60;
     --accent: #eaf2e9;
     --accent-foreground: #006b4f;
     --destructive: #b42318;
@@ -143,4 +143,32 @@
   html {
     @apply font-sans;
     }
+}
+
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+    color: #000 !important;
+    background: none !important;
+  }
+  .print-area {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+  }
+  .no-print {
+    display: none !important;
+  }
 }
