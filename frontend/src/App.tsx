@@ -1,54 +1,102 @@
-import { useState } from "react"
+import { lazy, Suspense } from "react"
 import {
   BrowserRouter,
-  Link,
   Navigate,
   Outlet,
   Route,
   Routes,
 } from "react-router-dom"
 import { ProtectedRoute } from "@/components/protected-route"
+import { RequireAction } from "@/components/require-action"
+import { LoadingSpinner, NotFound } from "@/components/request-states"
 import { AppLayout } from "@/layouts/app-layout"
 import { LoginPage } from "@/pages/auth/login"
-import { RegisterPage } from "@/pages/auth/register"
-import { CreateGroupPage } from "@/pages/auth/create-group"
-import { DashboardPage } from "@/pages/dashboard"
-import { DesignSystemPage } from "@/pages/design-system"
-import { GroupPage } from "@/pages/group"
-import { MembersPage } from "@/pages/members"
-import { MemberDetailsPage } from "@/pages/members/details"
-import { SavingsPage } from "@/pages/savings"
-import { initialContributions, initialMembers } from "@/data/demo-data"
 import { useI18n } from "@/i18n/i18n-context"
 
-function NotFoundPage() {
-  const { t } = useI18n()
+const RegisterPage = lazy(() =>
+  import("@/pages/auth/register").then((m) => ({ default: m.RegisterPage }))
+)
+const CreateGroupPage = lazy(() =>
+  import("@/pages/auth/create-group").then((m) => ({
+    default: m.CreateGroupPage,
+  }))
+)
+const CyclesPage = lazy(() =>
+  import("@/pages/cycles").then((m) => ({ default: m.CyclesPage }))
+)
+const DashboardPage = lazy(() =>
+  import("@/pages/dashboard").then((m) => ({ default: m.DashboardPage }))
+)
+const DesignSystemPage = lazy(() =>
+  import("@/pages/design-system").then((m) => ({
+    default: m.DesignSystemPage,
+  }))
+)
+const FinesPage = lazy(() =>
+  import("@/pages/fines").then((m) => ({ default: m.FinesPage }))
+)
+const GroupPage = lazy(() =>
+  import("@/pages/group").then((m) => ({ default: m.GroupPage }))
+)
+const LoansPage = lazy(() =>
+  import("@/pages/loans").then((m) => ({ default: m.LoansPage }))
+)
+const LoanDetailsPage = lazy(() =>
+  import("@/pages/loans/details").then((m) => ({
+    default: m.LoanDetailsPage,
+  }))
+)
+const MeetingsPage = lazy(() =>
+  import("@/pages/meetings").then((m) => ({ default: m.MeetingsPage }))
+)
+const MeetingDetailsPage = lazy(() =>
+  import("@/pages/meetings/details").then((m) => ({
+    default: m.MeetingDetailsPage,
+  }))
+)
+const MembersPage = lazy(() =>
+  import("@/pages/members").then((m) => ({ default: m.MembersPage }))
+)
+const MemberDetailsPage = lazy(() =>
+  import("@/pages/members/details").then((m) => ({
+    default: m.MemberDetailsPage,
+  }))
+)
+const ProfilePage = lazy(() =>
+  import("@/pages/profile").then((m) => ({ default: m.ProfilePage }))
+)
+const ReportsPage = lazy(() =>
+  import("@/pages/reports").then((m) => ({ default: m.ReportsPage }))
+)
+const StatementsPage = lazy(() =>
+  import("@/pages/statements").then((m) => ({ default: m.StatementsPage }))
+)
+const ShareOutPage = lazy(() =>
+  import("@/pages/share-out").then((m) => ({ default: m.ShareOutPage }))
+)
+const InvitationsPage = lazy(() =>
+  import("@/pages/invitations").then((m) => ({ default: m.InvitationsPage }))
+)
+const JoinPage = lazy(() =>
+  import("@/pages/auth/join").then((m) => ({ default: m.JoinPage }))
+)
+const RecordPage = lazy(() =>
+  import("@/pages/record").then((m) => ({ default: m.RecordPage }))
+)
+const SavingsPage = lazy(() =>
+  import("@/pages/savings").then((m) => ({ default: m.SavingsPage }))
+)
 
+function PageLoading() {
   return (
-    <main
-      id="main-content"
-      className="mx-auto flex min-h-svh max-w-lg flex-col justify-center gap-5 px-6"
-    >
-      <p className="text-sm text-muted-foreground">{t("notFound.eyebrow")}</p>
-      <h1 className="text-4xl font-semibold tracking-tight">
-        {t("notFound.title")}
-      </h1>
-      <p className="text-muted-foreground">{t("notFound.body")}</p>
-      <Link
-        to="/login"
-        className="w-fit font-medium text-brand underline underline-offset-4"
-      >
-        {t("notFound.back")}
-      </Link>
-    </main>
+    <div className="p-8">
+      <LoadingSpinner />
+    </div>
   )
 }
 
 export function App() {
   const { t } = useI18n()
-  // The savings and dashboard pages keep sample contributions until the backend
-  // savings endpoints work. They reset on reload.
-  const [contributions, setContributions] = useState(initialContributions)
 
   return (
     <BrowserRouter>
@@ -58,55 +106,84 @@ export function App() {
       >
         {t("app.skipToContent")}
       </a>
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/register/create-group" element={<CreateGroupPage />} />
-        <Route
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <Outlet />
-              </AppLayout>
-            </ProtectedRoute>
-          }
-        >
+      <Suspense fallback={<PageLoading />}>
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/join" element={<JoinPage />} />
+          <Route path="/register/create-group" element={<CreateGroupPage />} />
           <Route
-            path="/dashboard"
             element={
-              <DashboardPage
-                members={initialMembers}
-                contributions={contributions}
-              />
+              <ProtectedRoute>
+                <AppLayout>
+                  <Suspense fallback={<PageLoading />}>
+                    <Outlet />
+                  </Suspense>
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/savings" element={<SavingsPage />} />
+            <Route path="/savings/record" element={<RecordPage />} />
+            <Route path="/loans" element={<LoansPage />} />
+            <Route path="/loans/:loanId" element={<LoanDetailsPage />} />
+            <Route path="/meetings" element={<MeetingsPage />} />
+            <Route
+              path="/meetings/:meetingId"
+              element={<MeetingDetailsPage />}
+            />
+            <Route path="/fines" element={<FinesPage />} />
+            <Route path="/statements" element={<StatementsPage />} />
+            <Route
+              path="/invitations"
+              element={
+                <RequireAction action="manageInvitations">
+                  <InvitationsPage />
+                </RequireAction>
+              }
+            />
+            <Route path="/share-out" element={<ShareOutPage />} />
+            <Route
+              path="/reports"
+              element={
+                <RequireAction action="viewGroupFigures">
+                  <ReportsPage />
+                </RequireAction>
+              }
+            />
+            <Route path="/group" element={<GroupPage />} />
+            <Route path="/cycles" element={<CyclesPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route
+              path="/members"
+              element={
+                <RequireAction action="viewMembers">
+                  <MembersPage />
+                </RequireAction>
+              }
+            />
+            <Route
+              path="/members/:memberId"
+              element={
+                <RequireAction action="viewMembers">
+                  <MemberDetailsPage />
+                </RequireAction>
+              }
+            />
+            <Route path="*" element={<NotFound />} />
+          </Route>
+          <Route
+            path="/design-system"
+            element={
+              <div id="main-content">
+                <DesignSystemPage />
+              </div>
             }
           />
-          <Route
-            path="/savings"
-            element={
-              <SavingsPage
-                members={initialMembers}
-                contributions={contributions}
-                onAddContribution={(contribution) =>
-                  setContributions((previous) => [...previous, contribution])
-                }
-              />
-            }
-          />
-          <Route path="/group" element={<GroupPage />} />
-          <Route path="/members" element={<MembersPage />} />
-          <Route path="/members/:memberId" element={<MemberDetailsPage />} />
-        </Route>
-        <Route
-          path="/design-system"
-          element={
-            <div id="main-content">
-              <DesignSystemPage />
-            </div>
-          }
-        />
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   )
 }

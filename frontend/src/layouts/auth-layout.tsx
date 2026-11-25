@@ -28,8 +28,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
         </div>
       </aside>
       <div className="flex min-w-0 flex-col p-6 sm:p-10 lg:px-12">
-        <div className="flex items-center justify-between gap-4 text-sm text-muted-foreground">
-          <span>{t("auth.memberAccess")}</span>
+        <div className="flex items-center justify-end gap-4 text-sm text-muted-foreground">
           <LanguageSwitcher />
         </div>
         <main
@@ -38,9 +37,6 @@ export function AuthLayout({ children }: { children: ReactNode }) {
         >
           {children}
         </main>
-        <footer className="text-sm text-muted-foreground">
-          {t("auth.footer")}
-        </footer>
       </div>
     </div>
   )
