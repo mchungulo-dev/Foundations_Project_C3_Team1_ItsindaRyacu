@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const crypto = require('crypto');
+const { protect, adminsOnly } = require('../middleware/auth');
+const { today, isValidDate } = require('../utils/dates');
 
 // ═════════════════════════════════════════════════════════════════════════════
 // USSD FLOW (Africa's Talking)
@@ -28,6 +30,7 @@ const STRINGS = {
         enterPin: (name) => `Hello ${name},\nEnter your 4-digit PIN:`,
         noPin: 'No PIN set. Contact your admin.',
         wrongPin: 'Incorrect PIN.\nAccess denied.',
+        locked: 'Too many wrong PINs.\nTry again in 15 minutes.',
         invalidOption: 'Invalid option.\nDial again.',
         error: 'Service error. Please try again.',
 
@@ -84,6 +87,7 @@ const STRINGS = {
         enterPin: (name) => `Muraho ${name},\nShyiramo PIN yawe y'imibare 4:`,
         noPin: 'Nta PIN ufite. Vugana n\'umuyobozi.',
         wrongPin: 'PIN siyo.\nNtiwemerewe kwinjira.',
+        locked: 'Wibeshye PIN inshuro nyinshi.\nOngera ugerageze nyuma y\'iminota 15.',
         invalidOption: 'Ibyo wahisemo sibyo.\nOngera uhamagare.',
         error: 'Habaye ikibazo. Ongera ugerageze.',
 
@@ -140,6 +144,48 @@ const LANGUAGE_MENU =
     'CON Welcome to Itsinda Ryacu\nMurakaza neza\n1. English\n2. Kinyarwanda';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
+
+// ── Wrong-PIN lockout ────────────────────────────────────────────────────────
+// After MAX_PIN_TRIES wrong PINs a number is blocked for LOCK_MINUTES, so a
+// 4-digit PIN cannot be guessed by trying all 10,000. Kept in memory: a
+// server restart clears it, which is fine for this purpose.
+const MAX_PIN_TRIES = 3;
+const LOCK_MINUTES = 15;
+const pinFailures = new Map(); // phone → { count, lockedUntil }
+
+function isLocked(phone) {
+    const entry = pinFailures.get(phone);
+    if (!entry || !entry.lockedUntil) return false;
+    if (Date.now() < entry.lockedUntil) return true;
+    pinFailures.delete(phone); // lock has expired
+    return false;
+}
+
+function recordWrongPin(phone) {
+    const entry = pinFailures.get(phone) ?? { count: 0, lockedUntil: null };
+    entry.count += 1;
+    if (entry.count >= MAX_PIN_TRIES) {
+        entry.lockedUntil = Date.now() + LOCK_MINUTES * 60 * 1000;
+    }
+    pinFailures.set(phone, entry);
+}
+
+// ── Only Africa's Talking may call /ussd ─────────────────────────────────────
+// Set USSD_SECRET in .env and put the same value in the callback URL on
+// Africa's Talking, e.g. https://<your-ngrok>/ussd?key=<USSD_SECRET>.
+// If USSD_SECRET is not set the check is skipped (local testing only).
+function checkUssdKey(req, res, next) {
+    const secret = process.env.USSD_SECRET;
+    if (!secret) return next();
+    const given = String(req.query.key ?? '');
+    const ok = given.length === secret.length &&
+        crypto.timingSafeEqual(Buffer.from(given), Buffer.from(secret));
+    if (!ok) return res.status(403).type('text/plain').send('END Access denied.');
+    return next();
+}
+if (!process.env.USSD_SECRET) {
+    console.warn('[USSD] USSD_SECRET is not set: /ussd accepts requests from anyone.');
+}
 
 function hashPin(pin) {
     return crypto.createHash('sha256').update(String(pin)).digest('hex');
@@ -237,9 +283,9 @@ function memberFlow(member, choice, inputs, s) {
     if (choice === '4') {
         const m = db.prepare(
             `SELECT meeting_date, meeting_time FROM meetings
-             WHERE account_id = ? AND meeting_date >= date('now')
-             ORDER BY meeting_date ASC LIMIT 1`
-        ).get(member.account_id);
+             WHERE account_id = ? AND meeting_date >= ?
+             ORDER BY meeting_date ASC, meeting_time ASC LIMIT 1`
+        ).get(member.account_id, today());
         return m ? `END ${s.meeting(m.meeting_date, m.meeting_time)}` : `END ${s.noMeeting}`;
     }
 
@@ -265,12 +311,13 @@ function secretaryFlow(member, choice, inputs, s) {
         const target = getGroupMember(member.account_id, inputs[0]);
         if (!target) return `END ${s.memberNotFound}`;
 
-        // The group's meeting closest to today (today's meeting if there is one).
+        // The group's latest meeting up to today (today's if there is one).
+        // Future meetings are skipped, as in the meetings API.
         const meeting = db.prepare(
             `SELECT meeting_id, meeting_date FROM meetings
-             WHERE account_id = ?
-             ORDER BY ABS(julianday(meeting_date) - julianday('now')) ASC LIMIT 1`
-        ).get(member.account_id);
+             WHERE account_id = ? AND meeting_date <= ?
+             ORDER BY meeting_date DESC, meeting_id DESC LIMIT 1`
+        ).get(member.account_id, today());
         if (!meeting) return `END ${s.noMeetingToMark}`;
 
         if (inputs.length === 1) {
@@ -315,8 +362,8 @@ function treasurerFlow(member, choice, inputs, s) {
 
         db.prepare(
             `INSERT INTO savings (cycle_id, member_id, amount, save_date, status, recorded_by)
-             VALUES (?, ?, ?, date('now'), 'pending', ?)`
-        ).run(cycle.cycle_id, target.member_id, amount, member.member_id);
+             VALUES (?, ?, ?, ?, 'pending', ?)`
+        ).run(cycle.cycle_id, target.member_id, amount, today(), member.member_id);
 
         return `END ${s.savingRecorded(amount, target.member_name)}`;
     }
@@ -378,9 +425,11 @@ function chairpersonFlow(member, choice, inputs, s) {
         if (!newStatus) return `END ${s.invalidOption}`;
 
         const result = db.prepare(
-            `UPDATE loans SET status = ?, approved_by = ?
+            // Same as the loans API: an approved loan gets today's issue date.
+            `UPDATE loans SET status = ?, approved_by = ?,
+                issue_date = CASE WHEN ? = 'approved' THEN ? ELSE issue_date END
              WHERE loan_id = ? AND status = 'requested'`
-        ).run(newStatus, member.member_id, loan.loan_id);
+        ).run(newStatus, member.member_id, newStatus, today(), loan.loan_id);
         if (result.changes === 0) return `END ${s.alreadyHandled}`;
 
         return newStatus === 'approved'
@@ -424,7 +473,7 @@ const ROLE_FLOWS = {
 
 // ── USSD Route ────────────────────────────────────────────────────────────────
 
-router.post('/', (req, res) => {
+router.post('/', checkUssdKey, (req, res) => {
     const { sessionId, phoneNumber, text = '' } = req.body || {};
     console.log('[USSD]', { sessionId, phoneNumber, text });
 
@@ -465,7 +514,12 @@ function handleUssd(phoneNumber, textArray) {
 
     // ── Step 3: verify PIN (again on every later step, since USSD is stateless)
     if (!member.pin) return `END ${s.noPin}`;
-    if (hashPin(textArray[1]) !== member.pin) return `END ${s.wrongPin}`;
+    if (isLocked(phoneNumber)) return `END ${s.locked}`;
+    if (hashPin(textArray[1]) !== member.pin) {
+        recordWrongPin(phoneNumber);
+        return isLocked(phoneNumber) ? `END ${s.locked}` : `END ${s.wrongPin}`;
+    }
+    pinFailures.delete(phoneNumber); // correct PIN resets the count
 
     // ── Step 4: role-based main menu ──────────────────────────────────────
     if (textArray.length === 2) return `CON ${mainMenu(member.role, s)}`;
@@ -478,37 +532,83 @@ function handleUssd(phoneNumber, textArray) {
 }
 
 // ── Offline Sync Endpoint ─────────────────────────────────────────────────────
-router.post('/sync', (req, res) => {
+// Admins only. Handles queued items from members of the admin's own group;
+// items from other groups are left for their own admin.
+router.post('/sync', protect, adminsOnly, (req, res) => {
     try {
         const pending = db.prepare(`SELECT * FROM sync_queue WHERE status = 'pending'`).all();
-        let synced = 0, failed = 0;
+        let synced = 0, failed = 0, skipped = 0;
+
+        const markFailed = (item, why) => {
+            console.warn('[USSD sync] item', item.queue_id, 'failed:', why);
+            db.prepare(`UPDATE sync_queue SET status='failed' WHERE queue_id=?`).run(item.queue_id);
+            failed++;
+        };
 
         for (const item of pending) {
             try {
-                const payload = JSON.parse(item.payload);
                 const member = getMember(item.phone);
+                if (member && member.account_id !== req.user.account_id) {
+                    skipped++; // another group's item
+                    continue;
+                }
+                if (!member || !member.is_active) {
+                    markFailed(item, 'phone is not an active member');
+                    continue;
+                }
 
-                if (item.action === 'SAVE' && member) {
+                const payload = JSON.parse(item.payload);
+                const amount = parseAmount(payload.amount);
+                if (amount === null) {
+                    markFailed(item, 'invalid amount');
+                    continue;
+                }
+                // Always use the group's current cycle, never a cycle_id from the payload.
+                const cycle = db.prepare(
+                    `SELECT cycle_id, end_date, default_interest_rate FROM cycles
+                     WHERE account_id = ? AND status = 'active' LIMIT 1`
+                ).get(member.account_id);
+                if (!cycle) {
+                    markFailed(item, 'no active cycle');
+                    continue;
+                }
+
+                if (item.action === 'SAVE') {
+                    // Saved as 'pending' so the chairperson still verifies it.
                     db.prepare(
                         `INSERT INTO savings (cycle_id, member_id, amount, save_date, status, recorded_by)
-                         VALUES (?, ?, ?, date('now'), 'verified', ?)`
-                    ).run(payload.cycle_id, member.member_id, payload.amount, member.member_id);
-                } else if (item.action === 'LOAN_REQUEST' && member) {
+                         VALUES (?, ?, ?, ?, 'pending', ?)`
+                    ).run(cycle.cycle_id, member.member_id, amount, today(), member.member_id);
+                } else if (item.action === 'LOAN_REQUEST') {
+                    const open = db.prepare(
+                        `SELECT 1 FROM loans WHERE member_id = ? AND cycle_id = ? AND status = 'requested'`
+                    ).get(member.member_id, cycle.cycle_id);
+                    if (open) {
+                        markFailed(item, 'member already has a loan request in this cycle');
+                        continue;
+                    }
+                    // Same fields as the loans API. Due date: from the payload if it
+                    // is a real future date, otherwise the end of the cycle.
+                    const dueDate = isValidDate(payload.due_date) && payload.due_date > today()
+                        ? payload.due_date
+                        : cycle.end_date;
                     db.prepare(
-                        `INSERT INTO loans (cycle_id, member_id, principal_amount, interest_rate, issue_date, status)
-                         VALUES (?, ?, ?, 0, date('now'), 'pending')`
-                    ).run(payload.cycle_id, member.member_id, payload.amount);
+                        `INSERT INTO loans (cycle_id, member_id, principal_amount, interest_rate, due_date, status)
+                         VALUES (?, ?, ?, ?, ?, 'requested')`
+                    ).run(cycle.cycle_id, member.member_id, amount, cycle.default_interest_rate, dueDate);
+                } else {
+                    markFailed(item, `unknown action ${item.action}`);
+                    continue;
                 }
 
                 db.prepare(`UPDATE sync_queue SET status='synced', synced_at=datetime('now') WHERE queue_id=?`).run(item.queue_id);
                 synced++;
             } catch (e) {
-                db.prepare(`UPDATE sync_queue SET status='failed' WHERE queue_id=?`).run(item.queue_id);
-                failed++;
+                markFailed(item, e.message);
             }
         }
 
-        res.json({ message: 'Sync complete', synced, failed, total: pending.length });
+        res.json({ message: 'Sync complete', synced, failed, skipped, total: pending.length });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

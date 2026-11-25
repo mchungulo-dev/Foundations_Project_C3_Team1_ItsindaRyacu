@@ -5,6 +5,7 @@ const cors = require('cors')
 const db = require('./config/database')
 const app = express()
 const invitationService = require('./utils/invitationService.js');
+const { errorHandler } = require('./utils/http');
 
 // Use express middleware
 app.use(
@@ -54,6 +55,10 @@ app.get('/api/test-db', (req, res) => {
         tables: tables
     });
 });
+// Turns errors thrown in routes (e.g. fail(404, ...)) into JSON responses.
+// Must stay after all routes.
+app.use(errorHandler);
+
 console.log('JWT Secret loaded:', !!process.env.JWT_SECRET);
 
 // Schedule daily cleanup of expired and unused invitation tokens
