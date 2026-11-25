@@ -4,6 +4,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { demoMode } from "@/api/mode"
+import { DemoAccounts } from "@/components/demo-accounts"
 import { AuthLayout } from "@/layouts/auth-layout"
 import { useSession } from "@/context/session-context"
 import { apiErrorText } from "@/i18n/api-messages"
@@ -35,7 +37,8 @@ export function LoginPage() {
   const location = useLocation()
   const { setLoginSession } = useSession()
   const { t } = useI18n()
-  const [email, setEmail] = useState("")
+  const joined = location.state as { joined?: boolean; email?: string } | null
+  const [email, setEmail] = useState(joined?.email ?? "")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   // Errors are stored as message keys so they re-translate when the language changes.
@@ -80,6 +83,14 @@ export function LoginPage() {
         {t("login.title")}
       </h1>
       <form onSubmit={handleSubmit} noValidate className="mt-8 space-y-6">
+        {joined?.joined ? (
+          <p
+            role="status"
+            className="rounded-lg border border-border bg-secondary px-4 py-3 text-sm"
+          >
+            {t("login.joined")}
+          </p>
+        ) : null}
         {expiredNotice ? (
           <p
             role="status"
@@ -143,7 +154,9 @@ export function LoginPage() {
               variant="ghost"
               size="icon-sm"
               className="absolute top-1.5 right-2"
-              aria-label={showPassword ? t("password.hide") : t("password.show")}
+              aria-label={
+                showPassword ? t("password.hide") : t("password.show")
+              }
               aria-pressed={showPassword}
               disabled={submitting}
               onClick={() => setShowPassword(!showPassword)}
@@ -165,7 +178,12 @@ export function LoginPage() {
             </p>
           ) : null}
         </div>
-        <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full"
+          disabled={submitting}
+        >
           {submitting ? t("login.submitting") : t("action.signIn")}
           <RiArrowRightLine aria-hidden="true" />
         </Button>
@@ -179,6 +197,23 @@ export function LoginPage() {
           {t("login.createAccount")}
         </Link>
       </p>
+      <p className="mt-3 text-center text-sm">
+        <Link
+          to="/join"
+          className="font-medium text-brand underline-offset-4 hover:underline"
+        >
+          {t("login.haveCode")}
+        </Link>
+      </p>
+      {demoMode ? (
+        <DemoAccounts
+          onPick={(pickedEmail, pickedPassword) => {
+            setEmail(pickedEmail)
+            setPassword(pickedPassword)
+            setApiError("")
+          }}
+        />
+      ) : null}
     </AuthLayout>
   )
 }

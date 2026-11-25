@@ -30,8 +30,6 @@ export const rw: Messages = {
   "auth.taglineTwo": "Mukure hamwe.",
   "auth.illustrationAlt":
     "Abanyamuryango b’itsinda batanga imisanzu mu kigega rusange cyo kuzigama",
-  "auth.memberAccess": "Aho abanyamuryango binjirira",
-  "auth.footer": "© 2026 Itsinda Ryacu",
 
   // Login
   "login.title": "Injira",
@@ -55,11 +53,6 @@ export const rw: Messages = {
   "register.confirmPasswordPlaceholder": "Ongera wandike ijambobanga ryawe",
   "register.submit": "Fungura konti",
   "register.haveAccount": "Usanzwe ufite konti?",
-  "register.successTitle": "Konti yafunguwe.",
-  "register.successBody":
-    "Ubu, tegura itsinda ryawe ryo kuzigama. Uzaba umuyobozi waryo.",
-  "register.createGroup": "Kora itsinda ryo kuzigama",
-  "register.skip": "Ubu bireke · Injira",
 
   // Create group
   "createGroup.eyebrow": "Tangira itsinda ryo kuzigama",

@@ -27,8 +27,6 @@ export const en = {
   "auth.taglineOne": "Save together.",
   "auth.taglineTwo": "Grow together.",
   "auth.illustrationAlt": "Group members contributing to a shared savings fund",
-  "auth.memberAccess": "Member access",
-  "auth.footer": "© 2026 Itsinda Ryacu",
 
   // Login
   "login.title": "Sign in",
@@ -56,11 +54,6 @@ export const en = {
   "register.confirmPasswordPlaceholder": "Re-enter your password",
   "register.submit": "Create account",
   "register.haveAccount": "Already have an account?",
-  "register.successTitle": "Account created.",
-  "register.successBody":
-    "Next, set up your savings group. You will be the group admin.",
-  "register.createGroup": "Create a savings group",
-  "register.skip": "Skip for now · Sign in",
 
   // Create group
   "createGroup.eyebrow": "Start a savings group",
