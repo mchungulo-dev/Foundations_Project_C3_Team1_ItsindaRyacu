@@ -7,7 +7,7 @@ const invitationService = require('../utils/invitationService.js');
 router.post('/create', protect, adminOrChairperson, async (req, res) => {
     try {
         let { account_id, member_id, role_assigned, expirationHours } = req.body;
-        const invitedBy = req.user.id;
+        const invitedBy = req.user.member_id;
 
         if (!account_id || !member_id) {
             return res.status(400).json({ message: 'Group ID and Member ID requiered' });
@@ -26,7 +26,7 @@ router.post('/create', protect, adminOrChairperson, async (req, res) => {
 router.post('/redeem', protect, async (req, res) => {
     try {
         const code = req.body;
-        const memberID = req.user.id;
+        const memberID = req.user.member_id;
 
         if(!code) {
             return res.status(400).json({ message: 'Invitation code is required!'});
