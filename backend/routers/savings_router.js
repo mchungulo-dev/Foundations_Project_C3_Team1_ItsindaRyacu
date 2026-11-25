@@ -5,7 +5,7 @@ const { protect, adminsOrTreasurer } = require('../middleware/auth.js');
 
 router.post('/', protect, adminsOrTreasurer, (req, res) => {
     let { cycle_id, member_id, amount, save_date, client_ref } = req.body;
-    const recorded_by = req.user.id;
+    const recorded_by = req.user.member_id;
 
     // Validate input
     if(!cycle_id || !member_id || !amount || amount <= 0){
@@ -17,9 +17,11 @@ router.post('/', protect, adminsOrTreasurer, (req, res) => {
     
     try{
         // Check whether the saving was already recorded
-        const existingSaving = db.prepare('SELECT saving_id FROM savings WHERE client_ref = ?').get(client_ref);
-        if(existingSaving){
-            return res.status(200).json({ message: 'Saving already recorded', data: existingSaving});
+        if (client_ref) {
+            const existingSaving = db.prepare('SELECT saving_id FROM savings WHERE client_ref = ?').get(client_ref);
+            if (existingSaving) {
+                return res.status(200).json({ message: 'Saving already recorded', data: existingSaving });
+            }
         }
         // Check  if the saving cycle is active
         const existingCycle = db.prepare('SELECT status FROM cycles WHERE cycle_id = ? AND account_id = ?').get(cycle_id, req.user.account_id);
@@ -101,7 +103,7 @@ router.get('/summary', protect, (req, res) => {
         
         let totalLoans = 0;
         try{
-            const loanData = db.prepare(`SELECT SUM(principal_amount)as total_loans FROM loans WHERE cycle_id = ? AND status = 'active'`).get(cycle_id);
+            const loanData = db.prepare(`SELECT SUM(principal_amount)as total_loans FROM loans WHERE cycle_id = ? AND status = 'disbursed'`).get(cycle_id);
             totalLoans = loanData?.total_loans || 0;
 
         } catch(e){
@@ -138,6 +140,48 @@ router.get('/summary', protect, (req, res) => {
 
     } catch (error){
         return res.status(500).json({ error: "Failed to fetch summary"});
+    }
+});
+
+// PUT /api/savings/:id - Update an existing savings record
+router.put('/:id', protect, adminsOrTreasurer, (req, res) => {
+    const saving_id = req.params.id;
+    const { amount, save_date, status } = req.body;
+
+    try {
+        const existingSaving = db.prepare(`
+            SELECT s.*, c.status as cycle_status, c.account_id
+            FROM savings s
+            JOIN cycles c ON s.cycle_id = c.cycle_id
+            WHERE s.saving_id = ? 
+        `).get(saving_id);
+
+        if(!existingSaving || existingSaving.account_id !== req.user.account_id) {
+            return res.status(404).json({ error: "Saving record not found or unauthorised access."});
+        }
+        // Check if the cycle is active to prevent updating savings for a closed cycle.
+        if(existingSaving.cycle_status === 'closed') {
+            return res.status(400).json({ error: 'Cannot update saving for a closed cycle'});
+        }
+
+        const updateAmount = amount !== undefined ? amount : existingSaving.amount;
+        const updatedSaveDate = save_date || existingSaving.save_date;
+        const updatedStatus = status || existingSaving.status;
+
+        if(updateAmount <= 0) {
+            return res.status(400).json({ error: "Amount must be a positive integer"});
+        }
+
+        db.prepare(`
+            UPDATE savings
+            SET amount = ?, save_date = ?, status = ?, recorded_by = ? 
+            WHERE saving_id = ?
+        `).run(updateAmount, updatedSaveDate, updatedStatus, req.user.member_id, saving_id);
+
+        return res.json({ message: "Successfully updated saving"});
+    } catch (error) {
+        console.error('Error updating saving', error);
+        return res.status(500).json({ error: 'Failed to update saving record: ' + error.message});
     }
 });
 
