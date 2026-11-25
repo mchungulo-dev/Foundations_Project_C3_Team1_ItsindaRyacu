@@ -21,12 +21,14 @@ export function AuthLayout({ children }: { children: ReactNode }) {
             alt={t("auth.illustrationAlt")}
             width={1536}
             height={1024}
+            loading="lazy"
+            decoding="async"
             className="mt-10 h-auto w-full"
           />
         </div>
       </aside>
       <div className="flex min-w-0 flex-col p-6 sm:p-10 lg:px-12">
-        <div className="flex items-center justify-between gap-4 text-xs text-muted-foreground">
+        <div className="flex items-center justify-between gap-4 text-sm text-muted-foreground">
           <span>{t("auth.memberAccess")}</span>
           <LanguageSwitcher />
         </div>
@@ -36,7 +38,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
         >
           {children}
         </main>
-        <footer className="text-xs text-muted-foreground">
+        <footer className="text-sm text-muted-foreground">
           {t("auth.footer")}
         </footer>
       </div>
