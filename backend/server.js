@@ -5,6 +5,7 @@ const cors = require('cors')
 const db = require('./config/database')
 const app = express()
 const invitationService = require('./utils/invitationService.js');
+const { errorHandler } = require('./utils/http');
 
 // Use express middleware
 app.use(
@@ -15,6 +16,8 @@ app.use(
   })
 )
 app.use(express.json())
+// USSD gateways (e.g. Africa's Talking) POST form-encoded bodies
+app.use(express.urlencoded({ extended: false }))
 
 // routes
 const adminRegistrationRouter = require('./routers/admin_registration_router');
@@ -26,6 +29,7 @@ const sharesOutRouter = require('./routers/share-out-router');
 const meetingsRouter = require('./routers/meetingsRoutes');
 const loansRouter = require('./routers/loans-router');
 const invitationRouter = require('./routers/invitation-router.js');
+const ussdRouter = require('./routers/ussd-router');
 
 app.use('/auth/admin', adminRegistrationRouter);
 app.use('/auth/', loginRouter);
@@ -36,6 +40,7 @@ app.use('/share-out', sharesOutRouter);
 app.use('/api/meetings', meetingsRouter);
 app.use('/loans', loansRouter);
 app.use('/invitation', invitationRouter);
+app.use('/ussd', ussdRouter);
 
 // Check whether the DB is running.
 app.get('/api/test-db', (req, res) => {
@@ -50,6 +55,10 @@ app.get('/api/test-db', (req, res) => {
         tables: tables
     });
 });
+// Turns errors thrown in routes (e.g. fail(404, ...)) into JSON responses.
+// Must stay after all routes.
+app.use(errorHandler);
+
 console.log('JWT Secret loaded:', !!process.env.JWT_SECRET);
 
 // Schedule daily cleanup of expired and unused invitation tokens
